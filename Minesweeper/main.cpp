@@ -10,10 +10,20 @@ int main()
 	sf::RectangleShape square(sf::Vector2f(100, 100));
 	square.setPosition(200.f, 0.f);
 	shape.setFillColor(sf::Color::Blue);
-	square.setFillColor(sf::Color::Green);
+	//square.setFillColor(sf::Color::Green);
+	square.setOutlineColor(sf::Color::Blue);
+	square.setOutlineThickness(-1.f);
+
+	sf::Texture texture;
+	if (!texture.loadFromFile("Textures/texture-3.png"))
+	{
+		//error
+	}
+	square.setTexture(&texture);
+
 
 	bool goodMode = false;
-
+	bool validClick = true;
 	sf::Clock clock;
 	while (window.isOpen())
 	{
@@ -22,28 +32,39 @@ int main()
 		{
 			if (event.type == sf::Event::Closed)
 				window.close();
-			if (event.type == sf::Event::MouseButtonReleased && goodMode)
+			if (event.type == sf::Event::MouseButtonReleased)
 			{
 				sf::FloatRect fr = square.getGlobalBounds();
 				sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
 				sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
-				if (fr.contains(worldPos.x, worldPos.y))
-					square.setFillColor(sf::Color::Red);
+				if (fr.contains(worldPos.x, worldPos.y) && validClick)
+					square.setFillColor(sf::Color::White);
+
+				validClick = true;
 			}
 
 		}
 
 
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && validClick)
 		{
-
-
-
-
-			goodMode = true;
+			sf::FloatRect fr = square.getGlobalBounds();
+			sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
+			sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
+			if (fr.contains(worldPos.x, worldPos.y))
+			{
+				texture.loadFromFile("Textures/texture-2.png");
+				square.setTexture(&texture);
+			}
+			else
+			{
+				texture.loadFromFile("Textures/texture-3.png");
+				square.setTexture(&texture);
+				validClick = false;
+			}
+			
 		}
-		else
-			goodMode = false;
+
 		
 
 
