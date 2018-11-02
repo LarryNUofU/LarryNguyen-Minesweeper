@@ -19,7 +19,7 @@ sf::Text *gameplayBackButtonText;
 
 void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int numSquaresWidth, int numSquaresHeight, int numMines);
 bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int numSquaresHeight);
-
+bool checkIfMineAround(int boardIndex, int direction, int numSquaresWidth, int numSquaresHeight);
 struct GameSquare
 {
 	sf::Text num;
@@ -349,6 +349,24 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 		sf::RectangleShape square(sf::Vector2f(side, side));
 		square.setPosition(currentXPos, currentYPos);
 
+
+		//set font of the text and position
+		gs.num.setFont(*gameplayFont);
+		gameplayBackButtonText->setString("BACK");
+
+		gs.num.setCharacterSize(48); // in pixels, not points!
+
+		gs.num.setFillColor(sf::Color::Red);
+
+		gs.num.setStyle(sf::Text::Bold | sf::Text::Underlined);
+
+		sf::FloatRect textBounds(gs.num.getLocalBounds());
+		sf::Vector2f squareSize(gs.square.getSize());
+
+		gs.num.setOrigin((textBounds.width - squareSize.x) / 2 + textBounds.left, (textBounds.height - squareSize.y) / 2 + textBounds.top);
+		gs.num.setPosition(gs.square.getPosition());
+
+
 		//set visuals of the square
 		square.setFillColor(sf::Color::Blue);
 		square.setOutlineColor(sf::Color::Blue);
@@ -369,6 +387,9 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 		gs.square = square;
 		board->gameBoardArr[i] = gs;
 	}
+
+
+
 
 
 	//calculate the border squares
@@ -393,16 +414,111 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 		}
 	}
 
-	//go through the mine squares and calculate the flag squares that surround them. Check to make sure within bounds.
+	/*//go through the mine squares and calculate the flag squares that surround them. Check to make sure within bounds.
+	for (auto it = intSet.begin(); it != intSet.end(); it++)
+	{
+		int index = *it;
+		for (int i = 0; i <= 7; i++)
+		{
+			if (checkWithinBounds(index, i, numSquaresWidth, numSquaresHeight))
+			{
+				switch (i)
+				{
+				case 0:
+					if (!board->gameBoardArr[index - numSquaresWidth].isMine)
+					board->gameBoardArr[index - numSquaresWidth].
+				}
+			}
+		}
+	}*/
+
+	
+	for (int i = 0; i < numSquares; i++)
+	{
+		if (!board->gameBoardArr[i].isMine)
+		{
+			int minesAroundSquare = 0;
+			for (int j = 0; j <= 7; j++)
+			{
+				if (checkIfMineAround(i, j, numSquaresWidth, numSquaresHeight))
+					minesAroundSquare++;
+			}
+
+			//set the square object to be a number square if more than 0 mines around
+			if (minesAroundSquare > 0)
+			{
+				board->gameBoardArr[i].isBlank = false;
+				board->gameBoardArr[i].isNumber = true;
+			}
 
 
 
-
+		}
+	}
 
 
 
 
 }
+
+
+bool checkIfMineAround(int boardIndex, int direction, int numSquaresWidth, int numSquaresHeight)
+{
+	if (checkWithinBounds(boardIndex, direction, numSquaresWidth, numSquaresHeight))
+	{
+		switch (direction)
+		{
+		case 0:
+			if (board->gameBoardArr[boardIndex - numSquaresWidth - 1].isMine)
+				return true;
+			else
+				return false;
+		case 1:
+			if (board->gameBoardArr[boardIndex - numSquaresWidth].isMine)
+				return true;
+			else
+				return false;
+		case 2:
+			if (board->gameBoardArr[boardIndex - numSquaresWidth + 1].isMine)
+				return true;
+			else
+				return false;
+		case 3:
+			if (board->gameBoardArr[boardIndex - 1].isMine)
+				return true;
+			else
+				return false;
+		case 4:
+			if (board->gameBoardArr[boardIndex + 1].isMine)
+				return true;
+			else
+				return false;
+		case 5:
+			if (board->gameBoardArr[boardIndex + numSquaresWidth - 1].isMine)
+				return true;
+			else
+				return false;
+
+		case 6:
+			if (board->gameBoardArr[boardIndex + numSquaresWidth].isMine)
+				return true;
+			else
+				return false;
+
+		case 7:
+			if (board->gameBoardArr[boardIndex + numSquaresWidth + 1].isMine)
+				return true;
+			else
+				return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
+
+
 
 //boardIndex assumed to be a valid index
 
@@ -466,62 +582,35 @@ bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int n
 		left = true;
 	}
 
-	if (top)
+	if (top & right)
 	{
-		if (left)
-		{
-			canGoLeft = false;
-			canGoBLeft = false;
-		}
-			
-		else if (right)
-		{
-			canGoRight = false;
-			canGoBRight = false;
-		}
-			
+		canGoUp = false;
+		canGoTopLeft = false;
+		canGoRight = false;
+		canGoBRight = false;
 	}
-	else if (bottom)
+	else if (top & left)
 	{
-		if (left)
-		{
-			canGoTopLeft = false;
-			canGoLeft = false;
-		}
-		else if (right)
-		{
-			canGoTopRight = false;
-			canGoBRight = false;
-		}
-			
+		canGoUp = false;
+		canGoTopRight = false;
+		canGoLeft = false;
+		canGoBLeft = false;
 	}
-	else if (left)
+	else if (bottom & right)
 	{
-		if (top)
-		{
-			canGoUp = false;
-			canGoTopRight = false;
-		}	
-		else if (bottom)
-		{
-			canGoDown = false;
-			canGoBRight = false;
-		}		
+		canGoDown = false;
+		canGoBLeft = false;
+		canGoTopRight = false;
+		canGoRight = false;
 	}
-	else if (right)
+	else if (bottom & left)
 	{
-		if (top)
-		{
-			canGoUp = false;
-			canGoTopLeft = false;
-		}
-			
-		else if (bottom)
-		{
-			canGoDown = false;
-			canGoBLeft = false;
-		}	
+		canGoDown = false;
+		canGoTopLeft = false;
+		canGoLeft = false;
+		canGoBRight = false;
 	}
+
 
 	switch (direction)
 	{
