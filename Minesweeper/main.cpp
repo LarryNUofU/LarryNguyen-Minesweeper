@@ -1,19 +1,24 @@
 #include <SFML/Graphics.hpp>
 #include <Windows.h>
+#include <stdlib.h>
+#include <unordered_set>
 
 bool inMainMenu = true;
-bool easyMode = false;
+bool easyMode = true;
 bool medMode = false;
 bool setupGameplay = false;
 
+sf::Texture *textureDefault;
+
 
 sf::RectangleShape *gameplayBackButton;
+sf::Font *gameplayFont;
 sf::Text *gameplayBackButtonText;
 
 
 
 void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int numSquaresWidth, int numSquaresHeight, int numMines);
-
+bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int numSquaresHeight);
 
 struct GameSquare
 {
@@ -34,7 +39,7 @@ struct Board
 {
 	GameSquare *gameBoardArr;
 	int *mineArray;
-	int *borderSquares;
+	std::unordered_set<int> *borderSquares;
 
 	int widthSquares;
 	int heightSquares;
@@ -44,6 +49,10 @@ struct Board
 };
 
 void RecurseBlankSquares(int num, Board &board);
+
+
+Board *board;
+
 
 
 //The loop that runs at the main menu
@@ -58,6 +67,9 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 		// error...
 		easyButton.setFillColor(sf::Color::Cyan);
 	}
+
+
+
 	//////logic to make text go center of button///////
 	sf::Text text;
 	text.setFont(font);
@@ -141,6 +153,9 @@ int main()
 	}
 	square.setTexture(&texture);
 
+	textureDefault = &texture;
+
+
 
 	bool goodMode = false;
 	bool validClick = true;
@@ -157,7 +172,16 @@ int main()
 		else if (setupGameplay)
 		{
 			if (easyMode)
-				setupGameplayAndBoard(433.f, 70.f, 414.f, 9, 9, 8);
+				setupGameplayAndBoard(433.f, 153.f, 414.f, 9, 9, 8);
+
+			window.clear();
+			for (int i = 0; i < 81; i++)
+			{
+				window.draw(board->gameBoardArr[i].square);
+			}
+			window.draw(*gameplayBackButton);
+			window.draw(*gameplayBackButtonText);
+			window.display();
 		}
 		else
 		{
@@ -275,38 +299,101 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 	gameplayBackButton = new sf::RectangleShape(sf::Vector2f(200, 100));
 
 
-	sf::Font font;
-	if (!font.loadFromFile("Fonts/Roboto-Black.ttf"))
+	gameplayFont = new sf::Font;
+	if (!gameplayFont->loadFromFile("Fonts/Roboto-Black.ttf"))
 	{
 		// error...
 
 	}
 
-	sf::Text text;
+	gameplayBackButtonText = new sf::Text;
 	// select the font
-	text.setFont(font); // font is a sf::Font
+	gameplayBackButtonText->setFont(*gameplayFont); // font is a sf::Font
 
-	// set the string to display
-	text.setString("BACK");
+	gameplayBackButtonText->setString("BACK");
 
-	// set the character size
-	text.setCharacterSize(48); // in pixels, not points!
+	gameplayBackButtonText->setCharacterSize(48); // in pixels, not points!
 
-	// set the color
-	text.setFillColor(sf::Color::Red);
+	gameplayBackButtonText->setFillColor(sf::Color::Red);
 
-	// set the text style
-	text.setStyle(sf::Text::Bold | sf::Text::Underlined);
+	gameplayBackButtonText->setStyle(sf::Text::Bold | sf::Text::Underlined);
 
-	sf::FloatRect textBounds(text.getLocalBounds());
+	sf::FloatRect textBounds(gameplayBackButtonText->getLocalBounds());
 	sf::Vector2f squareSize(gameplayBackButton->getSize());
 
-	//line below thanks to Mario from StackOverflow!
-	text.setOrigin((textBounds.width - squareSize.x) / 2 + textBounds.left, (textBounds.height - squareSize.y) / 2 + textBounds.top);
-	text.setPosition(gameplayBackButton->getPosition());
+	gameplayBackButtonText->setOrigin((textBounds.width - squareSize.x) / 2 + textBounds.left, (textBounds.height - squareSize.y) / 2 + textBounds.top);
+	gameplayBackButtonText->setPosition(gameplayBackButton->getPosition());
 
 
 	//creating the board
+	//first, fill board with blank squares
+	board = new Board;
+	int numSquares = numSquaresWidth * numSquaresHeight;
+	board->gameBoardArr = new GameSquare[numSquares];
+	float currentXPos = boardXpos;
+	float currentYPos = boardYpos;
+	float side = width / numSquaresWidth;
+
+	for (int i = 0; i < numSquares; i++)
+	{
+		GameSquare gs;
+		gs.isBlank = true;
+		gs.isMine = false;
+		gs.isNumber = false;
+		gs.isClicked = false;
+		gs.isFlagged = false;
+
+
+		float side = width / numSquaresWidth;
+		//set the appropriate coordinate of the square
+		sf::RectangleShape square(sf::Vector2f(side, side));
+		square.setPosition(currentXPos, currentYPos);
+
+		//set visuals of the square
+		square.setFillColor(sf::Color::Blue);
+		square.setOutlineColor(sf::Color::Blue);
+		square.setOutlineThickness(-1.f);
+		square.setTexture(textureDefault);
+
+
+		//set the distance parameters for the next square's position.
+		if (i % numSquaresWidth == numSquaresWidth - 1)
+		{
+			currentXPos = boardXpos;
+			currentYPos += side;
+		}
+		else
+		{
+			currentXPos += side;
+		}
+		gs.square = square;
+		board->gameBoardArr[i] = gs;
+	}
+
+
+	//calculate the border squares
+	//board->borderSquares = new std::unordered_set<int>;
+	//for (int i = 0; i < )
+
+
+
+
+	std::unordered_set<int> intSet;
+	//Choose random positions on the board for mines
+	while (numMines > 0)
+	{
+		int randNum = rand() % numSquares;
+
+		if (intSet.find(randNum) == intSet.end())
+		{
+			board->gameBoardArr[randNum].isBlank = false;
+			board->gameBoardArr[randNum].isMine = true;
+			intSet.insert(randNum);
+			numMines -= 1;
+		}
+	}
+
+	//go through the mine squares and calculate the flag squares that surround them. Check to make sure within bounds.
 
 
 
@@ -314,5 +401,200 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 
 
 
+
+}
+
+//boardIndex assumed to be a valid index
+
+//direction:
+//0 - top left, 1 - top, 2 - top right, 3 - left, 4 - right, 5 - bottom left, 6 - bottom, 7 - bottom right
+//
+//
+bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int numSquaresHeight) 
+{
+	bool top = false;
+	bool left = false;
+	bool right = false;
+	bool bottom = false;
+
+	bool canGoUp = false;
+	bool canGoLeft = false;
+	bool canGoRight = false;
+	bool canGoDown = false;
+	bool canGoTopLeft = false;
+	bool canGoTopRight = false;
+	bool canGoBLeft = false;
+	bool canGoBRight = false;
+
+	if (boardIndex < numSquaresWidth)
+	{
+		canGoDown = true;
+		canGoLeft = true;
+		canGoRight = true;
+		canGoBLeft = true;
+		canGoBRight = true;
+		top = true;
+	}
+		
+	if (boardIndex % numSquaresWidth == numSquaresWidth - 1)
+	{
+		canGoUp = true;
+		canGoDown = true;
+		canGoLeft = true;
+		canGoBLeft = true;
+		canGoTopLeft = true;
+		right = true;
+	}
+		
+	if (boardIndex >= numSquaresWidth * (numSquaresHeight - 1))
+	{
+		canGoRight = true;
+		canGoUp = true;
+		canGoLeft = true;
+		canGoTopLeft = true;
+		canGoTopRight = true;
+		bottom = true;
+	}
+
+	if (boardIndex % numSquaresWidth == 0)
+	{
+		canGoUp = true;
+		canGoRight = true;
+		canGoDown = true;
+		canGoTopRight = true;
+		canGoBLeft = true;
+		left = true;
+	}
+
+	if (top)
+	{
+		if (left)
+		{
+			canGoLeft = false;
+			canGoBLeft = false;
+		}
+			
+		else if (right)
+		{
+			canGoRight = false;
+			canGoBRight = false;
+		}
+			
+	}
+	else if (bottom)
+	{
+		if (left)
+		{
+			canGoTopLeft = false;
+			canGoLeft = false;
+		}
+		else if (right)
+		{
+			canGoTopRight = false;
+			canGoBRight = false;
+		}
+			
+	}
+	else if (left)
+	{
+		if (top)
+		{
+			canGoUp = false;
+			canGoTopRight = false;
+		}	
+		else if (bottom)
+		{
+			canGoDown = false;
+			canGoBRight = false;
+		}		
+	}
+	else if (right)
+	{
+		if (top)
+		{
+			canGoUp = false;
+			canGoTopLeft = false;
+		}
+			
+		else if (bottom)
+		{
+			canGoDown = false;
+			canGoBLeft = false;
+		}	
+	}
+
+	switch (direction)
+	{
+	case 0:
+		if (canGoTopLeft)
+			return true;
+		else
+			return false;
+	case 1:
+		if (canGoUp)
+			return true;
+		else
+			return false;
+	case 2:
+		if (canGoTopRight)
+			return true;
+		else
+			return false;
+	case 3:
+		if (canGoLeft)
+			return true;
+		else
+			return false;
+	case 4:
+		if (canGoRight)
+			return true;
+		else
+			return false;
+	case 5:
+		if (canGoBLeft)
+			return true;
+		else
+			return false;
+	case 6:
+		if (canGoDown)
+			return true;
+		else
+			return false;
+	case 7:
+		if (canGoBRight)
+			return true;
+		else
+			return false;
+	}
+
+	/*if (boardIndex < numSquaresWidth)
+		// check if top left
+		if (boardIndex == 0)
+
+		//check if top right
+		else if (boardIndex == numSquaresWidth - 1)
+
+
+		else
+
+	else if (boardIndex % numSquaresWidth == numSquaresWidth - 1)
+
+		//check if top right
+		if (boardIndex == numSquaresWidth - 1)
+
+
+		//check if bottom right
+        else if (boardIndex == numSquaresWidth * numSquaresHeight - 1)
+
+	    
+		else
+
+    
+	else if (boardIndex >= numSquaresWidth * (numSquaresHeight - 1))
+
+		//check if bottom left
+		if (boardIndex == numSquaresWidth * (numSquaresHeight - 1))
+
+		else if (boardIndex == numSquaresWidth * numSquaresHeight - 1)*/
 
 }
