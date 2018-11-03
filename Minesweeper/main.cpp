@@ -14,7 +14,7 @@ sf::Texture *texturePressed;
 
 sf::Texture *textureFlag;
 sf::Texture *textureFlagPressed;
-sf::Sprite *flagSprite;
+
 sf::Texture *textureWhite;
 
 sf::RectangleShape *gameplayBackButton;
@@ -24,6 +24,8 @@ sf::Text *gameplayBackButtonText;
 bool lostGame = false;
 bool wonGame = false;
 int squaresCountdown = 0;
+
+bool cleanupMemory = false;
 
 void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int numSquaresWidth, int numSquaresHeight, int numMines);
 bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int numSquaresHeight);
@@ -47,7 +49,7 @@ struct Board
 {
 	GameSquare *gameBoardArr;
 	std::unordered_set<int> *mineSet;
-	std::unordered_set<int> *borderSquares;
+	//std::unordered_set<int> *borderSquares;
 
 	int widthSquares;
 	int heightSquares;
@@ -66,9 +68,29 @@ Board *board;
 //The loop that runs at the main menu
 void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 {
+	
+	if (cleanupMemory)
+	{
+		//free up memory
+		delete gameplayBackButton;
+		delete gameplayBackButtonText;
+		delete gameplayFont;
+		delete[] board->gameBoardArr;
+		delete board->mineSet;
+		delete board;
+
+		cleanupMemory = false;
+	}
+	
+	
+	
+	
+	
+	
 	//button
 	sf::RectangleShape easyButton(sf::Vector2f(200, 100));
 	easyButton.setFillColor(sf::Color::Blue);
+	easyButton.setOutlineThickness(0.1f);
 	sf::Font font;
 	if (!font.loadFromFile("Fonts/Roboto-Black.ttf"))
 	{
@@ -99,7 +121,7 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 
 	text.setFillColor(sf::Color::Red);
 
-	text.setStyle(sf::Text::Bold | sf::Text::Underlined);
+	text.setStyle(sf::Text::Bold);
 
 	sf::FloatRect textBounds(text.getLocalBounds());
 	sf::Vector2f squareSize(easyButton.getSize());
@@ -128,7 +150,7 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 
 	text2.setFillColor(sf::Color::Red);
 
-	text2.setStyle(sf::Text::Bold | sf::Text::Underlined);
+	text2.setStyle(sf::Text::Bold);
 
 	sf::FloatRect textBounds2(text2.getLocalBounds());
 	sf::Vector2f squareSize2(easyButton.getSize());
@@ -138,6 +160,7 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 
 
 	expertButton.setPosition(sf::Vector2f(200.f, 300.f));
+	expertButton.setOutlineThickness(0.1f);
 	text2.setPosition(expertButton.getPosition());
 
 
@@ -152,7 +175,7 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 
 	text3.setFillColor(sf::Color::Red);
 
-	text3.setStyle(sf::Text::Bold | sf::Text::Underlined);
+	text3.setStyle(sf::Text::Bold);
 
 	sf::FloatRect textBounds3(text3.getLocalBounds());
 	sf::Vector2f squareSize3(easyButton.getSize());
@@ -162,23 +185,24 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 
 
 	mediumButton.setPosition(sf::Vector2f(200.f, 500.f));
+	//mediumButton.setOutlineThickness(1.f);
 	text3.setPosition(mediumButton.getPosition());
 
 
 
+	sf::FloatRect fr = easyButton.getGlobalBounds();
+	sf::FloatRect fr2 = expertButton.getGlobalBounds();
+	sf::FloatRect fr3 = mediumButton.getGlobalBounds();
 
+	sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
+	sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
 	while (window.pollEvent(event))
 	{
 		if (event.type == sf::Event::Closed)
 			window.close();
 		if (event.type == sf::Event::MouseButtonReleased)
 		{
-			sf::FloatRect fr = easyButton.getGlobalBounds();
-			sf::FloatRect fr2 = expertButton.getGlobalBounds();
-			sf::FloatRect fr3 = mediumButton.getGlobalBounds();
 
-			sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
-			sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
 			if (fr.contains(worldPos.x, worldPos.y))
 			{
 				inMainMenu = false;
@@ -204,6 +228,23 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 
 	}
 	
+
+	if (fr.contains(worldPos.x, worldPos.y))
+		easyButton.setTexture(texturePressed);
+
+	if (fr2.contains(worldPos.x, worldPos.y))
+		expertButton.setTexture(texturePressed);
+
+
+	if (fr3.contains(worldPos.x, worldPos.y))
+		mediumButton.setTexture(texturePressed);
+
+
+
+
+
+
+
 
 
 
@@ -232,13 +273,6 @@ int main()
 
 	sf::RenderWindow window(sf::VideoMode(1280, 720), "minesweeper");
 	
-	/*sf::CircleShape shape(100.f);
-	sf::RectangleShape square(sf::Vector2f(100, 100));
-	square.setPosition(200.f, 0.f);
-	shape.setFillColor(sf::Color::Blue);
-	//square.setFillColor(sf::Color::Green);
-	square.setOutlineColor(sf::Color::Blue);
-	square.setOutlineThickness(-1.f);*/
 
 	sf::Texture texture;
 	if (!texture.loadFromFile("Textures/texture-3.png"))
@@ -282,14 +316,8 @@ int main()
 
 
 
-	bool goodMode = false;
-	bool validClick = false;
 	bool validRelease = true;
-
 	bool clickedOnBackButton = false;
-
-
-
 	bool leftClickOn = false;
 	bool rightClickOn = false;
 
@@ -370,16 +398,13 @@ int main()
 							easyMode = false;
 							medMode = false;
 							expertMode = false;
+
+							cleanupMemory = true;
 						}
-						//sf::FloatRect fr = square.getGlobalBounds();
-						//sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
-						//sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
-						//if (fr.contains(worldPos.x, worldPos.y) && validClick)
-							//square.setFillColor(sf::Color::White);
 					}
 
 
-					validClick = true;
+					
 
 				}
 
@@ -407,19 +432,12 @@ int main()
 
 			if (leftClickOn && !rightClickOn && validRelease)
 			{
-				//sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
-				//sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
-
 				//make sure left click either on the back button or a square
 				if (backFr.contains(worldPos.x, worldPos.y))
 				{
 					clickedOnBackButton = true;
 				}
-
 			}
-
-
-
 
 			if (backFr.contains(worldPos.x, worldPos.y))
 				gameplayBackButtonText->setFillColor(sf::Color::Blue);
@@ -427,10 +445,6 @@ int main()
 			{
 				gameplayBackButtonText->setFillColor(sf::Color::Red);
 			}
-
-
-
-
 
 			window.clear();
 			for (int i = 0; i < board->heightSquares * board->widthSquares; i++)
@@ -479,6 +493,9 @@ int main()
 							easyMode = false;
 							medMode = false;
 							expertMode = false;
+
+							cleanupMemory = true;
+
 						}
 						else if (leftClickOn)
 						{
@@ -548,7 +565,7 @@ int main()
 					}
 
 
-					validClick = true;
+					
 
 				}
 
@@ -822,7 +839,7 @@ int main()
 
 			window.display();*/
 
-
+			
 			window.clear();
 			for (int i = 0; i < board->heightSquares * board->widthSquares; i++)
 			{
@@ -878,6 +895,7 @@ void drawAndUpdate(GameSquare &square, int index)
 		//is a number square
 		square.square.setFillColor(sf::Color::White);
 		square.square.setTexture(textureWhite);
+		//square.square.setOutlineThickness(-0.503f);
 		square.isClicked = true;
 		//square.square.setFillColor(sf::Color::White);
 		squaresCountdown--;
@@ -1342,6 +1360,7 @@ void recurseBlankSquares(int index)
 	squaresCountdown--;
 	board->gameBoardArr[index].square.setFillColor(sf::Color::White);
 	board->gameBoardArr[index].square.setTexture(textureWhite);
+	//board->gameBoardArr[index].square.setOutlineThickness(-0.503f);
 	board->gameBoardArr[index].isClicked = true;
 
 
