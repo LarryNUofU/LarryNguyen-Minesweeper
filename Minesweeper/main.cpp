@@ -159,7 +159,7 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 	text2.setOrigin((textBounds2.width - squareSize2.x) / 2 + textBounds2.left, (textBounds2.height - squareSize2.y) / 2 + textBounds2.top);
 
 
-	expertButton.setPosition(sf::Vector2f(200.f, 300.f));
+	expertButton.setPosition(sf::Vector2f(200.f, 500.f));
 	expertButton.setOutlineThickness(0.1f);
 	text2.setPosition(expertButton.getPosition());
 
@@ -184,7 +184,7 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 	text3.setOrigin((textBounds3.width - squareSize3.x) / 2 + textBounds3.left, (textBounds3.height - squareSize3.y) / 2 + textBounds3.top);
 
 
-	mediumButton.setPosition(sf::Vector2f(200.f, 500.f));
+	mediumButton.setPosition(sf::Vector2f(200.f, 300.f));
 	//mediumButton.setOutlineThickness(1.f);
 	text3.setPosition(mediumButton.getPosition());
 
@@ -1097,25 +1097,26 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 					board->gameBoardArr[i].num.setFillColor(sf::Color::Blue);
 					break;
 				case 2:
-					board->gameBoardArr[i].num.setFillColor(sf::Color::Green);
+					//board->gameBoardArr[i].num.setFillColor(sf::Color(20, 201, 44, 255));
+					board->gameBoardArr[i].num.setFillColor(sf::Color(0, 128, 0, 255));
 					break;
 				case 3:
 					board->gameBoardArr[i].num.setFillColor(sf::Color::Red);
 					break;
 				case 4:
-					board->gameBoardArr[i].num.setFillColor(sf::Color::Red);
+					board->gameBoardArr[i].num.setFillColor(sf::Color(128, 0, 128, 255));
 					break;
 				case 5:
-					board->gameBoardArr[i].num.setFillColor(sf::Color::Black);
+					board->gameBoardArr[i].num.setFillColor(sf::Color(128, 0, 0, 255));
 					break;
 				case 6:
-					board->gameBoardArr[i].num.setFillColor(sf::Color::Cyan);
+					board->gameBoardArr[i].num.setFillColor(sf::Color(64, 224, 208, 255));
 					break;
 				case 7:
 					board->gameBoardArr[i].num.setFillColor(sf::Color::Black);
 					break;
 				case 8:
-					board->gameBoardArr[i].num.setFillColor(sf::Color::Black);
+					board->gameBoardArr[i].num.setFillColor(sf::Color(128, 128, 128, 255));
 					break;
 				}
 
