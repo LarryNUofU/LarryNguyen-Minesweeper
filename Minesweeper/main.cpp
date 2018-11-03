@@ -192,7 +192,7 @@ int main()
 		else if (setupGameplay)
 		{
 			if (easyMode)
-				setupGameplayAndBoard(433.f, 153.f, 414.f, 9, 9, 4);
+				setupGameplayAndBoard(433.f, 153.f, 414.f, 9, 9, 9);
 
 
 			setupGameplay = false;
@@ -484,7 +484,7 @@ void drawAndUpdate(GameSquare &square, int index)
 {
 	if (square.isBlank)
 	{
-		square.isClicked = true;
+		//square.isClicked = true;
 		recurseBlankSquares(index);
 	}
 	else if (square.isMine)
@@ -911,9 +911,92 @@ bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int n
 
 void recurseBlankSquares(int index)
 {
+	board->gameBoardArr[index].square.setFillColor(sf::Color::White);
+	board->gameBoardArr[index].isClicked = true;
+
+	for (int i = 0; i <= 7; i++)
+	{
+		switch (i)
+		{
+		case 0:
+			if (checkWithinBounds(index, i, board->widthSquares, board->heightSquares))
+			{
+				if (board->gameBoardArr[index - board->widthSquares - 1].isNumber && !board->gameBoardArr[index - board->widthSquares - 1].isClicked)
+					drawAndUpdate(board->gameBoardArr[index - board->widthSquares - 1], index - board->widthSquares - 1);
+				if (board->gameBoardArr[index - board->widthSquares - 1].isBlank && !board->gameBoardArr[index - board->widthSquares - 1].isClicked)
+					recurseBlankSquares(index - board->widthSquares - 1);
+			}
+			break;
+		case 1:
+			if (checkWithinBounds(index, i, board->widthSquares, board->heightSquares))
+			{
+				if (board->gameBoardArr[index - board->widthSquares].isNumber && !board->gameBoardArr[index - board->widthSquares].isClicked)
+					drawAndUpdate(board->gameBoardArr[index - board->widthSquares], index - board->widthSquares);
+				if (board->gameBoardArr[index - board->widthSquares].isBlank && !board->gameBoardArr[index - board->widthSquares].isClicked)
+					recurseBlankSquares(index - board->widthSquares);
+			}
+			break;
+		case 2:
+			if (checkWithinBounds(index, i, board->widthSquares, board->heightSquares))
+			{
+				if (board->gameBoardArr[index - board->widthSquares + 1].isNumber && !board->gameBoardArr[index - board->widthSquares + 1].isClicked)
+					drawAndUpdate(board->gameBoardArr[index - board->widthSquares + 1], index - board->widthSquares + 1);
+				if (board->gameBoardArr[index - board->widthSquares + 1].isBlank && !board->gameBoardArr[index - board->widthSquares + 1].isClicked)
+					recurseBlankSquares(index - board->widthSquares + 1);
+			}
+			break;
+		case 3:
+			if (checkWithinBounds(index, i, board->widthSquares, board->heightSquares))
+			{
+				if (board->gameBoardArr[index - 1].isNumber && !board->gameBoardArr[index - 1].isClicked)
+					drawAndUpdate(board->gameBoardArr[index - 1], index - 1);
+				if (board->gameBoardArr[index - 1].isBlank && !board->gameBoardArr[index - 1].isClicked)
+					recurseBlankSquares(index - 1);
+			}
+			break;
+		case 4:
+			if (checkWithinBounds(index, i, board->widthSquares, board->heightSquares))
+			{
+				if (board->gameBoardArr[index + 1].isNumber && !board->gameBoardArr[index + 1].isClicked)
+					drawAndUpdate(board->gameBoardArr[index + 1], index + 1);
+				if (board->gameBoardArr[index + 1].isBlank && !board->gameBoardArr[index + 1].isClicked)
+					recurseBlankSquares(index + 1);
+			}
+			break;
+		case 5:
+			if (checkWithinBounds(index, i, board->widthSquares, board->heightSquares))
+			{
+				if (board->gameBoardArr[index + board->widthSquares - 1].isNumber && !board->gameBoardArr[index + board->widthSquares - 1].isClicked)
+					drawAndUpdate(board->gameBoardArr[index + board->widthSquares - 1], index + board->widthSquares - 1);
+				if (board->gameBoardArr[index + board->widthSquares - 1].isBlank && !board->gameBoardArr[index + board->widthSquares - 1].isClicked)
+					recurseBlankSquares(index + board->widthSquares - 1);
+			}
+			break;
+		case 6:
+			if (checkWithinBounds(index, i, board->widthSquares, board->heightSquares))
+			{
+				if (board->gameBoardArr[index + board->widthSquares].isNumber && !board->gameBoardArr[index + board->widthSquares].isClicked)
+					drawAndUpdate(board->gameBoardArr[index + board->widthSquares], index + board->widthSquares);
+				if (board->gameBoardArr[index + board->widthSquares].isBlank && !board->gameBoardArr[index + board->widthSquares].isClicked)
+					recurseBlankSquares(index + board->widthSquares);
+			}
+			break;
+		case 7:
+			if (checkWithinBounds(index, i, board->widthSquares, board->heightSquares))
+			{
+				if (board->gameBoardArr[index + board->widthSquares + 1].isNumber && !board->gameBoardArr[index + board->widthSquares + 1].isClicked)
+					drawAndUpdate(board->gameBoardArr[index + board->widthSquares + 1], index + board->widthSquares + 1);
+				if (board->gameBoardArr[index + board->widthSquares + 1].isBlank && !board->gameBoardArr[index + board->widthSquares + 1].isClicked)
+					recurseBlankSquares(index + board->widthSquares + 1);
+			}
+			break;
 
 
 
+
+		}
+
+	}
 
 
 
