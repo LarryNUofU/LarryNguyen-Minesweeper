@@ -9,6 +9,7 @@ bool medMode = false;
 bool setupGameplay = false;
 
 sf::Texture *textureDefault;
+sf::Texture *texturePressed;
 
 
 sf::RectangleShape *gameplayBackButton;
@@ -31,7 +32,7 @@ struct GameSquare
 	bool isNumber;
 };
 
-void drawAndUpdate(GameSquare &square);
+void drawAndUpdate(GameSquare &square, int index);
 
 
 
@@ -48,7 +49,7 @@ struct Board
 	float lenOfSquare;
 };
 
-void RecurseBlankSquares(int num, Board &board);
+void recurseBlankSquares(int index);
 
 
 Board *board;
@@ -138,23 +139,29 @@ int main()
 
 	sf::RenderWindow window(sf::VideoMode(1280, 720), "SFML works!");
 	
-	sf::CircleShape shape(100.f);
+	/*sf::CircleShape shape(100.f);
 	sf::RectangleShape square(sf::Vector2f(100, 100));
 	square.setPosition(200.f, 0.f);
 	shape.setFillColor(sf::Color::Blue);
 	//square.setFillColor(sf::Color::Green);
 	square.setOutlineColor(sf::Color::Blue);
-	square.setOutlineThickness(-1.f);
+	square.setOutlineThickness(-1.f);*/
 
 	sf::Texture texture;
 	if (!texture.loadFromFile("Textures/texture-3.png"))
 	{
 		//error
 	}
-	square.setTexture(&texture);
+	//square.setTexture(&texture);
 
 	textureDefault = &texture;
 
+	sf::Texture texture2;
+	if (!texture2.loadFromFile("Textures/texture-2.png"))
+	{
+		//error
+	}
+	texturePressed = &texture2;
 
 
 	bool goodMode = false;
@@ -168,7 +175,8 @@ int main()
 	bool leftClickOn = false;
 	bool rightClickOn = false;
 
-	sf::RectangleShape *squareOfInterest = nullptr;
+	GameSquare *squareOfInterest = nullptr;
+	int indexOfInterest = -1;
 
 
 	sf::Clock clock;
@@ -184,7 +192,7 @@ int main()
 		else if (setupGameplay)
 		{
 			if (easyMode)
-				setupGameplayAndBoard(433.f, 153.f, 414.f, 9, 9, 8);
+				setupGameplayAndBoard(433.f, 153.f, 414.f, 9, 9, 4);
 
 
 			setupGameplay = false;
@@ -201,9 +209,6 @@ int main()
 		{
 			//in this else statement, we are in the gameplay loop
 
-			
-
-
 			while (window.pollEvent(event))
 			{
 				if (event.type == sf::Event::Closed)
@@ -217,17 +222,24 @@ int main()
 
 						if (leftClickOn)
 						{
+							if(squareOfInterest != nullptr)
+								drawAndUpdate(*squareOfInterest, indexOfInterest);
+
+							squareOfInterest = nullptr;
 
 						}
 						else if (rightClickOn)
 						{
 
 						}
-						sf::FloatRect fr = square.getGlobalBounds();
-						sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
-						sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
-						if (fr.contains(worldPos.x, worldPos.y) && validClick)
-							square.setFillColor(sf::Color::White);
+
+
+
+						//sf::FloatRect fr = square.getGlobalBounds();
+						//sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
+						//sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
+						//if (fr.contains(worldPos.x, worldPos.y) && validClick)
+							//square.setFillColor(sf::Color::White);
 					}
 
 
@@ -236,10 +248,6 @@ int main()
 				}
 
 			}
-
-
-
-
 
 
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
@@ -261,46 +269,86 @@ int main()
 
 			if (leftClickOn && !rightClickOn && validRelease)
 			{
-
-				//make sure left click either on a square or the back button
-				sf::FloatRect backFr = gameplayBackButton->getGlobalBounds();
-
-				sf::FloatRect fr = square.getGlobalBounds();
-
 				sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
 				sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
 
-				
+				//make sure left click either on the back button or a square
+
+				sf::FloatRect backFr = gameplayBackButton->getGlobalBounds();
+
 				if (backFr.contains(worldPos.x, worldPos.y))
 				{
 
 				}
-				else if (fr.contains(worldPos.x, worldPos.y))
+				//find out if click is on the grid at all
+				else if (squareOfInterest == nullptr && worldPos.x >= board->startingPosX && worldPos.x <= board->startingPosX + board->widthSquares * board->lenOfSquare && worldPos.y <= board->startingPosY + board->heightSquares * board->lenOfSquare && worldPos.y >= board->startingPosY)
 				{
+					int numSquares = board->widthSquares * board->heightSquares;
 					
-					
-					
-					//if (fr.contains(worldPos.x, worldPos.y))
-					//{
-						squareOfInterest = &square;
-						texture.loadFromFile("Textures/texture-2.png");
-						square.setTexture(&texture);
-					//}
-					//else
-					//{
-					//	texture.loadFromFile("Textures/texture-3.png");
-					//	square.setTexture(&texture);
-					//}
+					int i = 0;
+					while (i < numSquares)
+					{
+						if (worldPos.y > board->gameBoardArr[i].square.getPosition().y + board->lenOfSquare)
+						{
+							i += board->widthSquares;
+							continue;
+						}
+						sf::FloatRect gb = board->gameBoardArr[i].square.getGlobalBounds();
+						if (gb.contains(worldPos.x, worldPos.y) && !board->gameBoardArr[i].isClicked)
+						{
+							squareOfInterest = &board->gameBoardArr[i];
+							indexOfInterest = i;
+							//texture.loadFromFile("Textures/texture-2.png");
+							board->gameBoardArr[i].square.setTexture(texturePressed);
+							break;
+						}
+
+						i++;
+					}
+				}
+
+
+				if (squareOfInterest != nullptr)
+				{
+					sf::FloatRect gb = squareOfInterest->square.getGlobalBounds();
+					if (!gb.contains(worldPos.x, worldPos.y))
+					{
+						validRelease = false;
+						indexOfInterest = -1;
+					}
+				}
+
+
+				//find out if user clicked on a square
+				/*sf::FloatRect fr = board->gameBoardArr[80].square.getGlobalBounds();
+
+	
+				if (backFr.contains(worldPos.x, worldPos.y))
+				{
+
+				}
+				else if (fr.contains(worldPos.x,worldPos.y))
+				{
+					squareOfInterest = &board->gameBoardArr[80].square;
+					texture.loadFromFile("Textures/texture-2.png");
+					board->gameBoardArr[80].square.setTexture(&texture);
 				}
 				else
 				{
 					validRelease = false;
-				}
+				}*/
 			}
 
 
 			if (rightClickOn && !leftClickOn && validRelease)
 			{
+
+
+
+
+
+
+
 
 			}
 
@@ -308,9 +356,10 @@ int main()
 
 			if (!validRelease && squareOfInterest != nullptr)
 			{
-				texture.loadFromFile("Textures/texture-3.png");
-				square.setTexture(&texture);
+				//texture.loadFromFile("Textures/texture-3.png");
+			    squareOfInterest->square.setTexture(textureDefault);
 				squareOfInterest = nullptr;
+				indexOfInterest = -1;
 			}
 
 
@@ -344,7 +393,7 @@ int main()
 
 
 
-			sf::FloatRect recBounds = square.getGlobalBounds();
+			/*sf::FloatRect recBounds = square.getGlobalBounds();
 			sf::Vector2f vec = square.getPosition();
 			sf::Vector2f circleVec = sf::Vector2f(vec.x + recBounds.width / 2, vec.y + recBounds.height / 2);
 			//shape.setPosition(circleVec);
@@ -397,7 +446,29 @@ int main()
 			window.draw(text);
 			window.draw(shape);
 
+			window.display();*/
+
+
+			window.clear();
+			for (int i = 0; i < 81; i++)
+			{
+				window.draw(board->gameBoardArr[i].square);
+
+				if (board->gameBoardArr[i].isNumber && board->gameBoardArr[i].isClicked)
+				{
+					window.draw(board->gameBoardArr[i].num);
+				}
+			}
+
+
+			window.draw(*gameplayBackButton);
+			window.draw(*gameplayBackButtonText);
 			window.display();
+
+
+
+
+
 		}
 
 	}
@@ -405,6 +476,33 @@ int main()
 	return 0;
 
 }
+
+
+
+
+void drawAndUpdate(GameSquare &square, int index)
+{
+	if (square.isBlank)
+	{
+		square.isClicked = true;
+		recurseBlankSquares(index);
+	}
+	else if (square.isMine)
+	{
+		square.isClicked = true;
+		square.square.setFillColor(sf::Color::Red);
+	}
+	else
+	{
+		//is a number square
+		square.isClicked = true;
+		square.square.setFillColor(sf::Color::White);
+
+	}
+}
+
+
+
 
 
 void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int numSquaresWidth, int numSquaresHeight, int numMines)
@@ -477,15 +575,17 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 
 		gs.num.setCharacterSize(48); // in pixels, not points!
 
+		gs.num.setString("0");
+
 		gs.num.setFillColor(sf::Color::Red);
 
 		gs.num.setStyle(sf::Text::Bold | sf::Text::Underlined);
 
 		sf::FloatRect textBounds(gs.num.getLocalBounds());
-		sf::Vector2f squareSize(gs.square.getSize());
+		sf::Vector2f squareSize(square.getSize());
 
 		gs.num.setOrigin((textBounds.width - squareSize.x) / 2 + textBounds.left, (textBounds.height - squareSize.y) / 2 + textBounds.top);
-		gs.num.setPosition(gs.square.getPosition());
+		gs.num.setPosition(square.getPosition());
 
 
 		//set visuals of the square
@@ -517,13 +617,14 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 	//board->borderSquares = new std::unordered_set<int>;
 	//for (int i = 0; i < )
 
-
+	srand(time(0));
 
 	board->mineSet = new std::unordered_set<int>;
 	//std::unordered_set<int> intSet;
 	//Choose random positions on the board for mines
 	while (numMines > 0)
 	{
+		
 		int randNum = rand() % numSquares;
 
 		if (board->mineSet->find(randNum) == board->mineSet->end())
@@ -553,6 +654,9 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 		}
 	}*/
 
+
+
+	//topleft/bottom not detected?????
 	
 	for (int i = 0; i < numSquares; i++)
 	{
@@ -655,56 +759,50 @@ bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int n
 	bool right = false;
 	bool bottom = false;
 
-	bool canGoUp = false;
-	bool canGoLeft = false;
-	bool canGoRight = false;
-	bool canGoDown = false;
-	bool canGoTopLeft = false;
-	bool canGoTopRight = false;
-	bool canGoBLeft = false;
-	bool canGoBRight = false;
+	bool canGoUp = true;
+	bool canGoLeft = true;
+	bool canGoRight = true;
+	bool canGoDown = true;
+	bool canGoTopLeft = true;
+	bool canGoTopRight = true;
+	bool canGoBLeft = true;
+	bool canGoBRight = true;
 
 	if (boardIndex < numSquaresWidth)
 	{
-		canGoDown = true;
-		canGoLeft = true;
-		canGoRight = true;
-		canGoBLeft = true;
-		canGoBRight = true;
-		top = true;
+		canGoUp = false;
+		canGoTopLeft = false;
+		canGoTopRight = false;
+
+		//top = true;
 	}
 		
 	if (boardIndex % numSquaresWidth == numSquaresWidth - 1)
 	{
-		canGoUp = true;
-		canGoDown = true;
-		canGoLeft = true;
-		canGoBLeft = true;
-		canGoTopLeft = true;
-		right = true;
+		canGoTopRight = false;
+		canGoRight = false;
+		canGoBRight = false;
+
+		//right = true;
 	}
 		
 	if (boardIndex >= numSquaresWidth * (numSquaresHeight - 1))
 	{
-		canGoRight = true;
-		canGoUp = true;
-		canGoLeft = true;
-		canGoTopLeft = true;
-		canGoTopRight = true;
-		bottom = true;
+		canGoBLeft = false;
+		canGoDown = false;
+		canGoBRight = false;
+		//bottom = true;
 	}
 
 	if (boardIndex % numSquaresWidth == 0)
 	{
-		canGoUp = true;
-		canGoRight = true;
-		canGoDown = true;
-		canGoTopRight = true;
-		canGoBLeft = true;
-		left = true;
+		canGoTopLeft = false;
+		canGoLeft = false;
+		canGoBLeft = false;
+		//left = true;
 	}
 
-	if (top & right)
+	/*if (top & right)
 	{
 		canGoUp = false;
 		canGoTopLeft = false;
@@ -731,7 +829,7 @@ bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int n
 		canGoTopLeft = false;
 		canGoLeft = false;
 		canGoBRight = false;
-	}
+	}*/
 
 
 	switch (direction)
@@ -807,5 +905,20 @@ bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int n
 		if (boardIndex == numSquaresWidth * (numSquaresHeight - 1))
 
 		else if (boardIndex == numSquaresWidth * numSquaresHeight - 1)*/
+
+}
+
+
+void recurseBlankSquares(int index)
+{
+
+
+
+
+
+
+
+
+
 
 }
