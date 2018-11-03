@@ -38,7 +38,7 @@ void drawAndUpdate(GameSquare &square);
 struct Board
 {
 	GameSquare *gameBoardArr;
-	int *mineArray;
+	std::unordered_set<int> *mineSet;
 	std::unordered_set<int> *borderSquares;
 
 	int widthSquares;
@@ -158,7 +158,19 @@ int main()
 
 
 	bool goodMode = false;
-	bool validClick = true;
+	bool validClick = false;
+	bool validRelease = true;
+
+	bool clickedOnBackButton = false;
+
+
+
+	bool leftClickOn = false;
+	bool rightClickOn = false;
+
+	sf::RectangleShape *squareOfInterest = nullptr;
+
+
 	sf::Clock clock;
 	while (window.isOpen())
 	{
@@ -174,14 +186,16 @@ int main()
 			if (easyMode)
 				setupGameplayAndBoard(433.f, 153.f, 414.f, 9, 9, 8);
 
-			window.clear();
+
+			setupGameplay = false;
+			/*window.clear();
 			for (int i = 0; i < 81; i++)
 			{
 				window.draw(board->gameBoardArr[i].square);
 			}
 			window.draw(*gameplayBackButton);
 			window.draw(*gameplayBackButtonText);
-			window.display();
+			window.display();*/
 		}
 		else
 		{
@@ -196,19 +210,118 @@ int main()
 					window.close();
 				if (event.type == sf::Event::MouseButtonReleased)
 				{
-					sf::FloatRect fr = square.getGlobalBounds();
-					sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
-					sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
-					if (fr.contains(worldPos.x, worldPos.y) && validClick)
-						square.setFillColor(sf::Color::White);
+
+
+					if (validRelease)
+					{
+
+						if (leftClickOn)
+						{
+
+						}
+						else if (rightClickOn)
+						{
+
+						}
+						sf::FloatRect fr = square.getGlobalBounds();
+						sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
+						sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
+						if (fr.contains(worldPos.x, worldPos.y) && validClick)
+							square.setFillColor(sf::Color::White);
+					}
+
 
 					validClick = true;
+
 				}
 
 			}
 
 
-			if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && validClick)
+
+
+
+
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				leftClickOn = true;
+			else
+				leftClickOn = false;
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
+				rightClickOn = true;
+			else
+				rightClickOn = false;
+
+
+			if (rightClickOn && leftClickOn)
+				validRelease = false;
+
+			if (!leftClickOn && !rightClickOn)
+				validRelease = true;
+
+
+			if (leftClickOn && !rightClickOn && validRelease)
+			{
+
+				//make sure left click either on a square or the back button
+				sf::FloatRect backFr = gameplayBackButton->getGlobalBounds();
+
+				sf::FloatRect fr = square.getGlobalBounds();
+
+				sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
+				sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
+
+				
+				if (backFr.contains(worldPos.x, worldPos.y))
+				{
+
+				}
+				else if (fr.contains(worldPos.x, worldPos.y))
+				{
+					
+					
+					
+					//if (fr.contains(worldPos.x, worldPos.y))
+					//{
+						squareOfInterest = &square;
+						texture.loadFromFile("Textures/texture-2.png");
+						square.setTexture(&texture);
+					//}
+					//else
+					//{
+					//	texture.loadFromFile("Textures/texture-3.png");
+					//	square.setTexture(&texture);
+					//}
+				}
+				else
+				{
+					validRelease = false;
+				}
+			}
+
+
+			if (rightClickOn && !leftClickOn && validRelease)
+			{
+
+			}
+
+
+
+			if (!validRelease && squareOfInterest != nullptr)
+			{
+				texture.loadFromFile("Textures/texture-3.png");
+				square.setTexture(&texture);
+				squareOfInterest = nullptr;
+			}
+
+
+
+
+
+
+
+
+
+			/*if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
 			{
 				sf::FloatRect fr = square.getGlobalBounds();
 				sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
@@ -225,7 +338,8 @@ int main()
 					validClick = false;
 				}
 
-			}
+			}*/
+
 
 
 
@@ -334,6 +448,13 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 	float currentYPos = boardYpos;
 	float side = width / numSquaresWidth;
 
+
+	board->heightSquares = numSquaresHeight;
+	board->widthSquares = numSquaresWidth;
+	board->lenOfSquare = side;
+	board->startingPosX = boardXpos;
+	board->startingPosY = boardYpos;
+
 	for (int i = 0; i < numSquares; i++)
 	{
 		GameSquare gs;
@@ -398,22 +519,22 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 
 
 
-
-	std::unordered_set<int> intSet;
+	board->mineSet = new std::unordered_set<int>;
+	//std::unordered_set<int> intSet;
 	//Choose random positions on the board for mines
 	while (numMines > 0)
 	{
 		int randNum = rand() % numSquares;
 
-		if (intSet.find(randNum) == intSet.end())
+		if (board->mineSet->find(randNum) == board->mineSet->end())
 		{
 			board->gameBoardArr[randNum].isBlank = false;
 			board->gameBoardArr[randNum].isMine = true;
-			intSet.insert(randNum);
+			board->mineSet->insert(randNum);
 			numMines -= 1;
 		}
 	}
-
+	
 	/*//go through the mine squares and calculate the flag squares that surround them. Check to make sure within bounds.
 	for (auto it = intSet.begin(); it != intSet.end(); it++)
 	{
@@ -449,12 +570,13 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 			{
 				board->gameBoardArr[i].isBlank = false;
 				board->gameBoardArr[i].isNumber = true;
+				board->gameBoardArr[i].num.setString(std::to_string(minesAroundSquare));
 			}
-
-
-
 		}
 	}
+
+
+
 
 
 
