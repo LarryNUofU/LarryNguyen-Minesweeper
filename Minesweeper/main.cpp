@@ -329,8 +329,27 @@ int main()
 			window.draw(*gameplayBackButtonText);
 			window.display();*/
 		}
-		else if (lostGame)
+		else if (lostGame || squaresCountdown == 0)
 		{
+
+
+			sf::Text endText;
+			endText.setFont(*gameplayFont);
+
+			if (lostGame)
+				endText.setString("GAME OVER");
+			else
+				endText.setString("YOU WIN!");
+
+			endText.setCharacterSize(30); // in pixels, not points!
+
+			endText.setFillColor(sf::Color::Red);
+
+			endText.setStyle(sf::Text::Bold | sf::Text::Underlined);
+
+
+			endText.setPosition(sf::Vector2f(300.f, 10.f));
+
 
 			while (window.pollEvent(event))
 			{
@@ -343,48 +362,15 @@ int main()
 					if (validRelease)
 					{
 
-						if (leftClickOn)
+						if (clickedOnBackButton)
 						{
-							if (squareOfInterest != nullptr)
-								if (!squareOfInterest->isFlagged)
-								{
-									//squareOfInterest->square.setFillColor(sf::Color::Transparent);
-									//squareOfInterest->square.setTexture(textureWhite);
-
-									drawAndUpdate(*squareOfInterest, indexOfInterest);
-								}
-
-								else
-								{
-									squareOfInterest->square.setFillColor(sf::Color::White);
-									squareOfInterest->square.setTexture(textureFlag);
-								}
-
-							squareOfInterest = nullptr;
+							inMainMenu = true;
+							clickedOnBackButton = false;
+							lostGame = false;
+							easyMode = false;
+							medMode = false;
+							expertMode = false;
 						}
-						else if (rightClickOn)
-						{
-							if (squareOfInterest != nullptr)
-							{
-								if (!squareOfInterest->isFlagged)
-								{
-									squareOfInterest->isFlagged = true;
-									squareOfInterest->square.setFillColor(sf::Color::White);
-									squareOfInterest->square.setTexture(textureFlag);
-								}
-								else
-								{
-									squareOfInterest->isFlagged = false;
-									squareOfInterest->square.setFillColor(sf::Color::Blue);
-									squareOfInterest->square.setTexture(textureDefault);
-								}
-							}
-
-							squareOfInterest = nullptr;
-
-
-						}
-
 						//sf::FloatRect fr = square.getGlobalBounds();
 						//sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
 						//sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
@@ -398,8 +384,56 @@ int main()
 				}
 
 			}
-			/*window.clear();
-			for (int i = 0; i < 81; i++)
+
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				leftClickOn = true;
+			else
+				leftClickOn = false;
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
+				rightClickOn = true;
+			else
+				rightClickOn = false;
+
+
+			if (rightClickOn && leftClickOn)
+				validRelease = false;
+
+			if (!leftClickOn && !rightClickOn)
+				validRelease = true;
+
+			sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
+			sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
+			sf::FloatRect backFr = gameplayBackButton->getGlobalBounds();
+
+			if (leftClickOn && !rightClickOn && validRelease)
+			{
+				//sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
+				//sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
+
+				//make sure left click either on the back button or a square
+				if (backFr.contains(worldPos.x, worldPos.y))
+				{
+					clickedOnBackButton = true;
+				}
+
+			}
+
+
+
+
+			if (backFr.contains(worldPos.x, worldPos.y))
+				gameplayBackButtonText->setFillColor(sf::Color::Blue);
+			else
+			{
+				gameplayBackButtonText->setFillColor(sf::Color::Red);
+			}
+
+
+
+
+
+			window.clear();
+			for (int i = 0; i < board->heightSquares * board->widthSquares; i++)
 			{
 				window.draw(board->gameBoardArr[i].square);
 
@@ -418,7 +452,8 @@ int main()
 
 			window.draw(*gameplayBackButton);
 			window.draw(*gameplayBackButtonText);
-			window.display();*/
+			window.draw(endText);
+			window.display();
 
 
 		}
@@ -436,8 +471,16 @@ int main()
 
 					if (validRelease)
 					{
-
-						if (leftClickOn)
+						if (clickedOnBackButton)
+						{
+							inMainMenu = true;
+							clickedOnBackButton = false;
+							lostGame = false;
+							easyMode = false;
+							medMode = false;
+							expertMode = false;
+						}
+						else if (leftClickOn)
 						{
 							if(squareOfInterest != nullptr)
 								if (!squareOfInterest->isFlagged)
@@ -469,12 +512,24 @@ int main()
 									squareOfInterest->isFlagged = true;
 									squareOfInterest->square.setFillColor(sf::Color::White);
 									squareOfInterest->square.setTexture(textureFlag);
+
+									if (squareOfInterest->isMine)
+										squaresCountdown--;
+									else
+										squaresCountdown++;
+
 								}
 								else
 								{
 									squareOfInterest->isFlagged = false;
 									squareOfInterest->square.setFillColor(sf::Color::Blue);
 									squareOfInterest->square.setTexture(textureDefault);
+
+									if (squareOfInterest->isMine)
+										squaresCountdown++;
+									else
+										squaresCountdown--;
+
 								}
 							}
 								
@@ -517,18 +572,25 @@ int main()
 				validRelease = true;
 
 
+
+
+
+			sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
+			sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
+			sf::FloatRect backFr = gameplayBackButton->getGlobalBounds();
+
 			if (leftClickOn && !rightClickOn && validRelease)
 			{
-				sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
-				sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
+				//sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
+				//sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
 
 				//make sure left click either on the back button or a square
 
-				sf::FloatRect backFr = gameplayBackButton->getGlobalBounds();
+				
 
 				if (backFr.contains(worldPos.x, worldPos.y))
 				{
-
+					clickedOnBackButton = true;
 				}
 				//find out if click is on the grid at all
 				else if (squareOfInterest == nullptr && worldPos.x >= board->startingPosX && worldPos.x <= board->startingPosX + board->widthSquares * board->lenOfSquare && worldPos.y <= board->startingPosY + board->heightSquares * board->lenOfSquare && worldPos.y >= board->startingPosY)
@@ -567,7 +629,7 @@ int main()
 						indexOfInterest = -1;
 					}
 				}
-				else
+				else if (!clickedOnBackButton)
 				{
 					validRelease = false;
 				}
@@ -594,11 +656,14 @@ int main()
 			}
 
 
+
+			
+
 			if (rightClickOn && !leftClickOn && validRelease)
 			{
-				sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
-				sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
 
+				//sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
+				//sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
 				if (squareOfInterest == nullptr && worldPos.x >= board->startingPosX && worldPos.x <= board->startingPosX + board->widthSquares * board->lenOfSquare && worldPos.y <= board->startingPosY + board->heightSquares * board->lenOfSquare && worldPos.y >= board->startingPosY)
 				{
 					int numSquares = board->widthSquares * board->heightSquares;
@@ -645,6 +710,12 @@ int main()
 
 			}
 
+
+
+			if (backFr.contains(worldPos.x, worldPos.y))
+				gameplayBackButtonText->setFillColor(sf::Color::Blue);
+			else
+				gameplayBackButtonText->setFillColor(sf::Color::Red);
 
 
 			if (!validRelease && squareOfInterest != nullptr)
@@ -809,7 +880,7 @@ void drawAndUpdate(GameSquare &square, int index)
 		square.square.setTexture(textureWhite);
 		square.isClicked = true;
 		//square.square.setFillColor(sf::Color::White);
-
+		squaresCountdown--;
 	}
 }
 
@@ -850,6 +921,10 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 	gameplayBackButtonText->setPosition(gameplayBackButton->getPosition());
 
 
+
+	
+
+
 	//creating the board
 	//first, fill board with blank squares
 	board = new Board;
@@ -858,6 +933,8 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 	float currentXPos = boardXpos;
 	float currentYPos = boardYpos;
 	float side = width / numSquaresWidth;
+
+	squaresCountdown = numSquares;
 
 
 	board->heightSquares = numSquaresHeight;
@@ -1262,9 +1339,11 @@ bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int n
 
 void recurseBlankSquares(int index)
 {
+	squaresCountdown--;
 	board->gameBoardArr[index].square.setFillColor(sf::Color::White);
 	board->gameBoardArr[index].square.setTexture(textureWhite);
 	board->gameBoardArr[index].isClicked = true;
+
 
 	for (int i = 0; i <= 7; i++)
 	{
