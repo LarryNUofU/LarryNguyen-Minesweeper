@@ -11,6 +11,9 @@ bool setupGameplay = false;
 sf::Texture *textureDefault;
 sf::Texture *texturePressed;
 
+sf::Texture *textureFlag;
+sf::Texture *textureFlagPressed;
+sf::Sprite *flagSprite;
 
 sf::RectangleShape *gameplayBackButton;
 sf::Font *gameplayFont;
@@ -163,6 +166,21 @@ int main()
 	}
 	texturePressed = &texture2;
 
+
+	sf::Texture texture3;
+	if (!texture3.loadFromFile("Textures/texture-3-flag.png"))
+	{
+		//error
+	}
+	textureFlag = &texture3;
+
+
+	sf::Texture texture4;
+	if (!texture4.loadFromFile("Textures/texture-2-flag.png"))
+	{
+		//error
+	}
+	textureFlagPressed = &texture4;
 
 	bool goodMode = false;
 	bool validClick = false;
@@ -342,13 +360,35 @@ int main()
 
 			if (rightClickOn && !leftClickOn && validRelease)
 			{
+				sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
+				sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
 
+				if (squareOfInterest == nullptr && worldPos.x >= board->startingPosX && worldPos.x <= board->startingPosX + board->widthSquares * board->lenOfSquare && worldPos.y <= board->startingPosY + board->heightSquares * board->lenOfSquare && worldPos.y >= board->startingPosY)
+				{
+					int numSquares = board->widthSquares * board->heightSquares;
 
+					int i = 0;
+					while (i < numSquares)
+					{
+						if (worldPos.y > board->gameBoardArr[i].square.getPosition().y + board->lenOfSquare)
+						{
+							i += board->widthSquares;
+							continue;
+						}
+						sf::FloatRect gb = board->gameBoardArr[i].square.getGlobalBounds();
+						if (gb.contains(worldPos.x, worldPos.y) && !board->gameBoardArr[i].isClicked)
+						{
+							squareOfInterest = &board->gameBoardArr[i];
+							indexOfInterest = i;
+							//texture.loadFromFile("Textures/texture-2.png");
+							board->gameBoardArr[i].square.setFillColor(sf::Color::White);
+							board->gameBoardArr[i].square.setTexture(textureFlag);
+							break;
+						}
 
-
-
-
-
+						i++;
+					}
+				}
 
 			}
 
