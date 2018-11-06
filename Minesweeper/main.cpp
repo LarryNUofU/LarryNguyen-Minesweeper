@@ -78,7 +78,7 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 		delete[] board->gameBoardArr;
 		delete board->mineSet;
 		delete board;
-
+	    
 		cleanupMemory = false;
 	}
 	
@@ -455,11 +455,9 @@ int main()
 				{
 					window.draw(board->gameBoardArr[i].num);
 				}
-
-
-				if (!board->gameBoardArr[i].isClicked && board->gameBoardArr[i].isFlagged)
+				if (lostGame && board->gameBoardArr[i].isMine)
 				{
-
+					board->gameBoardArr[i].square.setFillColor(sf::Color::Red);
 				}
 
 			}
