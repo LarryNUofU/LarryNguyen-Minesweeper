@@ -240,14 +240,6 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 		mediumButton.setTexture(texturePressed);
 
 
-
-
-
-
-
-
-
-
 	window.clear();
 	window.draw(easyButton);
 	window.draw(text);
@@ -421,7 +413,11 @@ int main()
 
 
 			if (rightClickOn && leftClickOn)
+			{
 				validRelease = false;
+				clickedOnBackButton = false;
+			}
+				
 
 			if (!leftClickOn && !rightClickOn)
 				validRelease = true;
@@ -581,7 +577,10 @@ int main()
 
 
 			if (rightClickOn && leftClickOn)
+			{
 				validRelease = false;
+				clickedOnBackButton = false;
+			}
 
 			if (!leftClickOn && !rightClickOn)
 				validRelease = true;
