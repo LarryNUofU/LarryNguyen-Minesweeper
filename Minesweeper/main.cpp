@@ -255,7 +255,121 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 
 
 
+void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickOn, bool &rightClickOn, bool &validRelease, bool &clickedOnBackButton)
+{
 
+	sf::Text endText;
+	endText.setFont(*gameplayFont);
+
+	if (lostGame)
+		endText.setString("GAME OVER");
+	else
+		endText.setString("YOU WIN!");
+
+	endText.setCharacterSize(30); // in pixels, not points!
+
+	endText.setFillColor(sf::Color::Red);
+
+	endText.setStyle(sf::Text::Bold | sf::Text::Underlined);
+
+
+	endText.setPosition(sf::Vector2f(300.f, 10.f));
+
+
+	while (window.pollEvent(event))
+	{
+		if (event.type == sf::Event::Closed)
+			window.close();
+		if (event.type == sf::Event::MouseButtonReleased)
+		{
+
+
+			if (validRelease)
+			{
+
+				if (clickedOnBackButton)
+				{
+					inMainMenu = true;
+					clickedOnBackButton = false;
+					lostGame = false;
+					easyMode = false;
+					medMode = false;
+					expertMode = false;
+
+					cleanupMemory = true;
+				}
+			}
+
+
+
+
+		}
+
+	}
+
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		leftClickOn = true;
+	else
+		leftClickOn = false;
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
+		rightClickOn = true;
+	else
+		rightClickOn = false;
+
+
+	if (rightClickOn && leftClickOn)
+	{
+		validRelease = false;
+		clickedOnBackButton = false;
+	}
+
+
+	if (!leftClickOn && !rightClickOn)
+		validRelease = true;
+
+	sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
+	sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
+	sf::FloatRect backFr = gameplayBackButton->getGlobalBounds();
+
+	if (leftClickOn && !rightClickOn && validRelease)
+	{
+		//make sure left click either on the back button or a square
+		if (backFr.contains(worldPos.x, worldPos.y))
+		{
+			clickedOnBackButton = true;
+		}
+	}
+
+	if (backFr.contains(worldPos.x, worldPos.y))
+		gameplayBackButtonText->setFillColor(sf::Color::Blue);
+	else
+	{
+		gameplayBackButtonText->setFillColor(sf::Color::Red);
+	}
+
+	window.clear();
+	for (int i = 0; i < board->heightSquares * board->widthSquares; i++)
+	{
+		window.draw(board->gameBoardArr[i].square);
+
+		if (board->gameBoardArr[i].isNumber && board->gameBoardArr[i].isClicked)
+		{
+			window.draw(board->gameBoardArr[i].num);
+		}
+		if (lostGame && board->gameBoardArr[i].isMine)
+		{
+			board->gameBoardArr[i].square.setFillColor(sf::Color::Red);
+		}
+
+	}
+
+	window.draw(*gameplayBackButton);
+	window.draw(*gameplayBackButtonText);
+	window.draw(endText);
+	window.display();
+
+	
+}
 
 
 int main()
@@ -340,130 +454,10 @@ int main()
 				
 
 			setupGameplay = false;
-			/*window.clear();
-			for (int i = 0; i < 81; i++)
-			{
-				window.draw(board->gameBoardArr[i].square);
-			}
-			window.draw(*gameplayBackButton);
-			window.draw(*gameplayBackButtonText);
-			window.display();*/
 		}
 		else if (lostGame || squaresCountdown == 0)
-		{
-
-
-			sf::Text endText;
-			endText.setFont(*gameplayFont);
-
-			if (lostGame)
-				endText.setString("GAME OVER");
-			else
-				endText.setString("YOU WIN!");
-
-			endText.setCharacterSize(30); // in pixels, not points!
-
-			endText.setFillColor(sf::Color::Red);
-
-			endText.setStyle(sf::Text::Bold | sf::Text::Underlined);
-
-
-			endText.setPosition(sf::Vector2f(300.f, 10.f));
-
-
-			while (window.pollEvent(event))
-			{
-				if (event.type == sf::Event::Closed)
-					window.close();
-				if (event.type == sf::Event::MouseButtonReleased)
-				{
-
-
-					if (validRelease)
-					{
-
-						if (clickedOnBackButton)
-						{
-							inMainMenu = true;
-							clickedOnBackButton = false;
-							lostGame = false;
-							easyMode = false;
-							medMode = false;
-							expertMode = false;
-
-							cleanupMemory = true;
-						}
-					}
-
-
-					
-
-				}
-
-			}
-
-			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-				leftClickOn = true;
-			else
-				leftClickOn = false;
-			if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
-				rightClickOn = true;
-			else
-				rightClickOn = false;
-
-
-			if (rightClickOn && leftClickOn)
-			{
-				validRelease = false;
-				clickedOnBackButton = false;
-			}
-				
-
-			if (!leftClickOn && !rightClickOn)
-				validRelease = true;
-
-			sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
-			sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
-			sf::FloatRect backFr = gameplayBackButton->getGlobalBounds();
-
-			if (leftClickOn && !rightClickOn && validRelease)
-			{
-				//make sure left click either on the back button or a square
-				if (backFr.contains(worldPos.x, worldPos.y))
-				{
-					clickedOnBackButton = true;
-				}
-			}
-
-			if (backFr.contains(worldPos.x, worldPos.y))
-				gameplayBackButtonText->setFillColor(sf::Color::Blue);
-			else
-			{
-				gameplayBackButtonText->setFillColor(sf::Color::Red);
-			}
-
-			window.clear();
-			for (int i = 0; i < board->heightSquares * board->widthSquares; i++)
-			{
-				window.draw(board->gameBoardArr[i].square);
-
-				if (board->gameBoardArr[i].isNumber && board->gameBoardArr[i].isClicked)
-				{
-					window.draw(board->gameBoardArr[i].num);
-				}
-				if (lostGame && board->gameBoardArr[i].isMine)
-				{
-					board->gameBoardArr[i].square.setFillColor(sf::Color::Red);
-				}
-
-			}
-
-			window.draw(*gameplayBackButton);
-			window.draw(*gameplayBackButtonText);
-			window.draw(endText);
-			window.display();
-
-
+		{	
+			lostOrWonLoop(window, event, leftClickOn, rightClickOn, validRelease, clickedOnBackButton);
 		}
 		else
 		{
@@ -509,8 +503,6 @@ int main()
 								}
 
 							
-
-
 							squareOfInterest = nullptr;
 
 						}
@@ -545,7 +537,6 @@ int main()
 							}
 								
 							squareOfInterest = nullptr;
-
 
 						}
 
@@ -584,8 +575,6 @@ int main()
 
 			if (!leftClickOn && !rightClickOn)
 				validRelease = true;
-
-
 
 
 
@@ -751,92 +740,6 @@ int main()
 			}
 
 
-
-
-
-
-
-
-
-			/*if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
-			{
-				sf::FloatRect fr = square.getGlobalBounds();
-				sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
-				sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
-				if (fr.contains(worldPos.x, worldPos.y))
-				{
-					texture.loadFromFile("Textures/texture-2.png");
-					square.setTexture(&texture);
-				}
-				else
-				{
-					texture.loadFromFile("Textures/texture-3.png");
-					square.setTexture(&texture);
-					validClick = false;
-				}
-
-			}*/
-
-
-
-
-
-			/*sf::FloatRect recBounds = square.getGlobalBounds();
-			sf::Vector2f vec = square.getPosition();
-			sf::Vector2f circleVec = sf::Vector2f(vec.x + recBounds.width / 2, vec.y + recBounds.height / 2);
-			//shape.setPosition(circleVec);
-
-
-			sf::Font font;
-			if (!font.loadFromFile("Fonts/Roboto-Black.ttf"))
-			{
-				// error...
-				square.setFillColor(sf::Color::Cyan);
-			}
-
-			sf::Text text;
-
-			// select the font
-			text.setFont(font); // font is a sf::Font
-
-			// set the string to display
-			text.setString("3");
-
-			// set the character size
-			text.setCharacterSize(48); // in pixels, not points!
-
-			// set the color
-			text.setFillColor(sf::Color::Red);
-
-			// set the text style
-			text.setStyle(sf::Text::Bold | sf::Text::Underlined);
-
-			sf::FloatRect textBounds(text.getLocalBounds());
-			sf::Vector2f squareSize(square.getSize());
-
-			//line below thanks to Mario from StackOverflow!
-			text.setOrigin((textBounds.width - squareSize.x) / 2 + textBounds.left, (textBounds.height - squareSize.y) / 2 + textBounds.top);
-
-			text.setPosition(square.getPosition());
-
-
-
-			shape.setPosition(sf::Vector2f(0.f, 0.f));
-
-
-			sf::Time elapsed = clock.restart();
-
-			square.move(sf::Vector2f(20.f * elapsed.asSeconds(), 0.f));
-
-			window.clear();
-
-			window.draw(square);
-			window.draw(text);
-			window.draw(shape);
-
-			window.display();*/
-
-			
 			window.clear();
 			for (int i = 0; i < board->heightSquares * board->widthSquares; i++)
 			{
@@ -858,10 +761,6 @@ int main()
 			window.draw(*gameplayBackButton);
 			window.draw(*gameplayBackButtonText);
 			window.display();
-
-
-
-
 
 		}
 
@@ -934,10 +833,6 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 
 	gameplayBackButtonText->setOrigin((textBounds.width - squareSize.x) / 2 + textBounds.left, (textBounds.height - squareSize.y) / 2 + textBounds.top);
 	gameplayBackButtonText->setPosition(gameplayBackButton->getPosition());
-
-
-
-	
 
 
 	//creating the board
