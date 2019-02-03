@@ -342,6 +342,7 @@ void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickO
 	{
 		validRelease = false;
 		clickedOnBackButton = false;
+		clickedOnRestartButton = false;
 	}
 
 
