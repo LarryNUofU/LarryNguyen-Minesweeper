@@ -8,6 +8,7 @@ bool easyMode = false;
 bool expertMode = false;
 bool medMode = false;
 bool setupGameplay = false;
+bool restartGame = false;
 
 sf::Texture *textureDefault;
 sf::Texture *texturePressed;
@@ -20,6 +21,9 @@ sf::Texture *textureWhite;
 sf::RectangleShape *gameplayBackButton;
 sf::Font *gameplayFont;
 sf::Text *gameplayBackButtonText;
+
+sf::RectangleShape *gameplayRestartButton;
+sf::Text *gameplayRestartButtonText;
 
 bool lostGame = false;
 bool wonGame = false;
@@ -63,7 +67,7 @@ void recurseBlankSquares(int index);
 
 Board *board;
 
-
+void memoryCleanup();
 
 //The loop that runs at the main menu
 void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
@@ -72,14 +76,7 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 	if (cleanupMemory)
 	{
 		//free up memory
-		delete gameplayBackButton;
-		delete gameplayBackButtonText;
-		delete gameplayFont;
-		delete[] board->gameBoardArr;
-		delete board->mineSet;
-		delete board;
-	    
-		cleanupMemory = false;
+		memoryCleanup();
 	}
 	
 	
@@ -253,9 +250,24 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 
 }
 
+void memoryCleanup() {
+
+	delete gameplayBackButton;
+	delete gameplayBackButtonText;
+	delete gameplayFont;
+	delete[] board->gameBoardArr;
+	delete board->mineSet;
+	delete board;
+
+	delete gameplayRestartButton;
+	delete gameplayRestartButtonText;
+	cleanupMemory = false;
 
 
-void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickOn, bool &rightClickOn, bool &validRelease, bool &clickedOnBackButton)
+}
+
+
+void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickOn, bool &rightClickOn, bool &validRelease, bool &clickedOnBackButton, bool &clickedOnRestartButton)
 {
 
 	sf::Text endText;
@@ -288,7 +300,7 @@ void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickO
 			{
 
 				if (clickedOnBackButton)
-				{
+				{	
 					inMainMenu = true;
 					clickedOnBackButton = false;
 					lostGame = false;
@@ -297,7 +309,16 @@ void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickO
 					expertMode = false;
 
 					cleanupMemory = true;
+					
 				}
+				else if (clickedOnRestartButton)
+				{
+					clickedOnRestartButton = false;
+					lostGame = false;
+					restartGame = true;
+					
+				}
+
 			}
 
 
@@ -327,10 +348,12 @@ void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickO
 	if (!leftClickOn && !rightClickOn)
 		validRelease = true;
 
+	//Calculate mouse coordinates on screen
 	sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
 	sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
-	sf::FloatRect backFr = gameplayBackButton->getGlobalBounds();
 
+	//bound calculations of the back button
+	sf::FloatRect backFr = gameplayBackButton->getGlobalBounds();
 	if (leftClickOn && !rightClickOn && validRelease)
 	{
 		//make sure left click either on the back button or a square
@@ -339,13 +362,32 @@ void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickO
 			clickedOnBackButton = true;
 		}
 	}
-
 	if (backFr.contains(worldPos.x, worldPos.y))
 		gameplayBackButtonText->setFillColor(sf::Color::Blue);
 	else
 	{
 		gameplayBackButtonText->setFillColor(sf::Color::Red);
 	}
+
+	//bound calculations of the restart button
+	sf::FloatRect restartFr = gameplayRestartButton->getGlobalBounds();
+	if (leftClickOn && !rightClickOn && validRelease)
+	{
+		
+		if (restartFr.contains(worldPos.x, worldPos.y))
+		{
+			clickedOnRestartButton = true;
+		}
+	}
+	if (restartFr.contains(worldPos.x, worldPos.y))
+		gameplayRestartButtonText->setFillColor(sf::Color::Blue);
+	else
+	{
+		gameplayRestartButtonText->setFillColor(sf::Color::Red);
+	}
+
+
+
 
 	window.clear();
 	for (int i = 0; i < board->heightSquares * board->widthSquares; i++)
@@ -366,6 +408,8 @@ void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickO
 	window.draw(*gameplayBackButton);
 	window.draw(*gameplayBackButtonText);
 	window.draw(endText);
+	window.draw(*gameplayRestartButton);
+	window.draw(*gameplayRestartButtonText);
 	window.display();
 
 	
@@ -426,7 +470,7 @@ int main()
 	bool clickedOnBackButton = false;
 	bool leftClickOn = false;
 	bool rightClickOn = false;
-
+	bool clickedOnRestartButton = false;
 	GameSquare *squareOfInterest = nullptr;
 	int indexOfInterest = -1;
 
@@ -455,9 +499,15 @@ int main()
 
 			setupGameplay = false;
 		}
+		else if (restartGame)
+		{
+			memoryCleanup();
+			setupGameplay = true;
+			restartGame = false;
+		}
 		else if (lostGame || squaresCountdown == 0)
 		{	
-			lostOrWonLoop(window, event, leftClickOn, rightClickOn, validRelease, clickedOnBackButton);
+			lostOrWonLoop(window, event, leftClickOn, rightClickOn, validRelease, clickedOnBackButton, clickedOnRestartButton);
 		}
 		else
 		{
@@ -830,10 +880,33 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 
 	sf::FloatRect textBounds(gameplayBackButtonText->getLocalBounds());
 	sf::Vector2f squareSize(gameplayBackButton->getSize());
-
 	gameplayBackButtonText->setOrigin((textBounds.width - squareSize.x) / 2 + textBounds.left, (textBounds.height - squareSize.y) / 2 + textBounds.top);
 	gameplayBackButtonText->setPosition(gameplayBackButton->getPosition());
 
+
+	//create reset button and its text
+	gameplayRestartButton = new sf::RectangleShape(sf::Vector2f(200, 100));
+
+	gameplayRestartButtonText = new sf::Text;
+	// select the font
+	gameplayRestartButtonText->setFont(*gameplayFont); // font is a sf::Font
+
+	gameplayRestartButtonText->setString("RESTART");
+
+	gameplayRestartButtonText->setCharacterSize(48); // in pixels, not points!
+
+	gameplayRestartButtonText->setFillColor(sf::Color::Red);
+
+	gameplayRestartButtonText->setStyle(sf::Text::Bold | sf::Text::Underlined);
+
+	textBounds = sf::FloatRect(gameplayRestartButtonText->getLocalBounds());
+	squareSize = sf::Vector2f(gameplayRestartButton->getSize());
+	gameplayRestartButtonText->setOrigin((textBounds.width - squareSize.x) / 2 + textBounds.left, (textBounds.height - squareSize.y) / 2 + textBounds.top);
+	gameplayRestartButtonText->setPosition(gameplayRestartButton->getPosition());
+
+	//set the position
+	gameplayRestartButton->setPosition(sf::Vector2f(0.f, 110.f));
+	gameplayRestartButtonText->setPosition(gameplayRestartButton->getPosition());
 
 	//creating the board
 	//first, fill board with blank squares
