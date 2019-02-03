@@ -885,7 +885,7 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 
 
 	//create reset button and its text
-	gameplayRestartButton = new sf::RectangleShape(sf::Vector2f(200, 100));
+	gameplayRestartButton = new sf::RectangleShape(sf::Vector2f(230, 100));
 
 	gameplayRestartButtonText = new sf::Text;
 	// select the font
@@ -905,7 +905,8 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 	gameplayRestartButtonText->setPosition(gameplayRestartButton->getPosition());
 
 	//set the position
-	gameplayRestartButton->setPosition(sf::Vector2f(0.f, 110.f));
+	//gameplayRestartButton->setPosition(sf::Vector2f(0.f, 110.f));
+	gameplayRestartButton->setPosition(sf::Vector2f(1050.f, 0.f));
 	gameplayRestartButtonText->setPosition(gameplayRestartButton->getPosition());
 
 	//creating the board
