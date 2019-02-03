@@ -2,6 +2,8 @@
 #include <Windows.h>
 #include <stdlib.h>
 #include <unordered_set>
+#include <cstdio>
+#include <ctime>
 
 bool inMainMenu = true;
 bool easyMode = false;
@@ -24,6 +26,9 @@ sf::Text *gameplayBackButtonText;
 
 sf::RectangleShape *gameplayRestartButton;
 sf::Text *gameplayRestartButtonText;
+
+//text for the timer
+sf::Text timerText;
 
 bool lostGame = false;
 bool wonGame = false;
@@ -70,7 +75,7 @@ Board *board;
 void memoryCleanup();
 
 //The loop that runs at the main menu
-void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
+void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event)
 {
 	
 	if (cleanupMemory)
@@ -206,7 +211,7 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event, sf::Clock *clock)
 				//easyMode = true;
 				setupGameplay = true;
 				easyMode = true;
-				clock->restart();
+				//clock->restart();
 			}
 			else if (fr2.contains(worldPos.x, worldPos.y))
 			{
@@ -411,6 +416,7 @@ void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickO
 	window.draw(endText);
 	window.draw(*gameplayRestartButton);
 	window.draw(*gameplayRestartButtonText);
+	window.draw(timerText);
 	window.display();
 
 	
@@ -475,8 +481,13 @@ int main()
 	GameSquare *squareOfInterest = nullptr;
 	int indexOfInterest = -1;
 
+	bool shouldStartTimer = true;
+	std::clock_t start = std::clock();
+	double duration;
 
-	sf::Clock clock;
+
+	
+
 	while (window.isOpen())
 	{
 		sf::Event event;
@@ -484,7 +495,7 @@ int main()
 
 		if (inMainMenu)
 		{
-			mainMenuLoop(window, event, &clock);
+			mainMenuLoop(window, event);
 		}
 		else if (setupGameplay)
 		{
@@ -499,6 +510,7 @@ int main()
 				
 
 			setupGameplay = false;
+			shouldStartTimer = true;
 		}
 		else if (restartGame)
 		{
@@ -514,6 +526,31 @@ int main()
 		{
 			//in this else statement, we are in the gameplay loop
 
+			timerText.setFont(*gameplayFont); // font is a sf::Font
+			timerText.setCharacterSize(48); // in pixels, not points!
+			timerText.setFillColor(sf::Color::Yellow);
+			timerText.setPosition(sf::Vector2f(578.f, 0.f));
+			timerText.setString("00:00");
+
+			if (!shouldStartTimer)
+			{
+				duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
+				int seconds = (int)duration;
+				int minutes = seconds / 60;
+				seconds = seconds % 60;
+				std::string str;
+				if (minutes < 10)
+					str.append("0");
+				str.append(std::to_string(minutes));
+				str.append(":");
+				if (seconds < 10)
+					str.append("0");
+				str.append(std::to_string(seconds));
+
+				timerText.setString(str);
+			}
+
+			
 			while (window.pollEvent(event))
 			{
 				if (event.type == sf::Event::Closed)
@@ -538,7 +575,16 @@ int main()
 						}
 						else if (leftClickOn)
 						{
-							if(squareOfInterest != nullptr)
+							if (squareOfInterest != nullptr)
+							{
+								if (shouldStartTimer)
+								{
+									start = std::clock();
+									shouldStartTimer = false;
+								}
+
+
+
 								if (!squareOfInterest->isFlagged)
 								{
 									//squareOfInterest->square.setFillColor(sf::Color::Transparent);
@@ -546,15 +592,23 @@ int main()
 
 									drawAndUpdate(*squareOfInterest, indexOfInterest);
 								}
-									
+
 								else
 								{
 									squareOfInterest->square.setFillColor(sf::Color::White);
 									squareOfInterest->square.setTexture(textureFlag);
 								}
 
+
+								squareOfInterest = nullptr;
+
+							}
+								
+
+
+								//squareOfInterest = nullptr;
 							
-							squareOfInterest = nullptr;
+							
 
 						}
 						else if (rightClickOn)
@@ -809,8 +863,14 @@ int main()
 
 			}
 
+
+
+			//update timer text
+
+
 			window.draw(*gameplayBackButton);
 			window.draw(*gameplayBackButtonText);
+			window.draw(timerText);
 			window.display();
 
 		}
