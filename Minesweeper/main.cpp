@@ -360,6 +360,40 @@ void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickO
 }
 
 
+
+bool mouseInsideBoard(float mouseX, float mouseY)
+{
+	return mouseX >= board->startingPosX && mouseX <= board->startingPosX + board->widthSquares * board->lenOfSquare && mouseY <= board->startingPosY + board->heightSquares * board->lenOfSquare && mouseY >= board->startingPosY;
+}
+
+
+void setSquareOfInterest(GameSquare *&squareOfInterest, int &indexOfInterest, float mouseX, float mouseY)
+{
+	int numSquares = board->widthSquares * board->heightSquares;
+
+	int i = 0;
+	while (i < numSquares)
+	{
+		if (mouseY > board->gameBoardArr[i].square.getPosition().y + board->lenOfSquare)
+		{
+			i += board->widthSquares;
+			continue;
+		}
+		sf::FloatRect gb = board->gameBoardArr[i].square.getGlobalBounds();
+		if (gb.contains(mouseX, mouseY) && !board->gameBoardArr[i].isClicked)
+		{
+			squareOfInterest = &board->gameBoardArr[i];
+			indexOfInterest = i;
+			//texture.loadFromFile("Textures/texture-2.png");
+			board->gameBoardArr[i].square.setTexture(texturePressed);
+			break;
+		}
+
+		i++;
+	}
+}
+
+
 int main()
 {
 	FreeConsole();
@@ -524,29 +558,16 @@ int main()
 
 								if (!squareOfInterest->isFlagged)
 								{
-									//squareOfInterest->square.setFillColor(sf::Color::Transparent);
-									//squareOfInterest->square.setTexture(textureWhite);
-
 									drawAndUpdate(*squareOfInterest, indexOfInterest);
 								}
-
 								else
 								{
 									squareOfInterest->square.setFillColor(sf::Color::White);
 									squareOfInterest->square.setTexture(textureFlag);
 								}
 
-
 								squareOfInterest = nullptr;
-
 							}
-								
-
-
-								//squareOfInterest = nullptr;
-							
-							
-
 						}
 						else if (rightClickOn)
 						{
@@ -583,16 +604,8 @@ int main()
 						}
 
 
-
-						//sf::FloatRect fr = square.getGlobalBounds();
-						//sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
-						//sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
-						//if (fr.contains(worldPos.x, worldPos.y) && validClick)
-							//square.setFillColor(sf::Color::White);
 					}
 
-
-					
 
 				}
 
@@ -626,42 +639,16 @@ int main()
 
 			if (leftClickOn && !rightClickOn && validRelease)
 			{
-				//sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
-				//sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
 
-				//make sure left click either on the back button or a square
-
-				
 
 				if (backFr.contains(worldPos.x, worldPos.y))
 				{
 					clickedOnBackButton = true;
 				}
 				//find out if click is on the grid at all
-				else if (squareOfInterest == nullptr && worldPos.x >= board->startingPosX && worldPos.x <= board->startingPosX + board->widthSquares * board->lenOfSquare && worldPos.y <= board->startingPosY + board->heightSquares * board->lenOfSquare && worldPos.y >= board->startingPosY)
+				else if (squareOfInterest == nullptr && mouseInsideBoard(worldPos.x, worldPos.y))
 				{
-					int numSquares = board->widthSquares * board->heightSquares;
-					
-					int i = 0;
-					while (i < numSquares)
-					{
-						if (worldPos.y > board->gameBoardArr[i].square.getPosition().y + board->lenOfSquare)
-						{
-							i += board->widthSquares;
-							continue;
-						}
-						sf::FloatRect gb = board->gameBoardArr[i].square.getGlobalBounds();
-						if (gb.contains(worldPos.x, worldPos.y) && !board->gameBoardArr[i].isClicked)
-						{
-							squareOfInterest = &board->gameBoardArr[i];
-							indexOfInterest = i;
-							//texture.loadFromFile("Textures/texture-2.png");
-							board->gameBoardArr[i].square.setTexture(texturePressed);
-							break;
-						}
-
-						i++;
-					}
+					setSquareOfInterest(squareOfInterest, indexOfInterest, worldPos.x, worldPos.y);
 				}
 
 
@@ -683,35 +670,12 @@ int main()
 
 
 
-			
-
 			if (rightClickOn && !leftClickOn && validRelease)
 			{
 
-				if (squareOfInterest == nullptr && worldPos.x >= board->startingPosX && worldPos.x <= board->startingPosX + board->widthSquares * board->lenOfSquare && worldPos.y <= board->startingPosY + board->heightSquares * board->lenOfSquare && worldPos.y >= board->startingPosY)
+				if (squareOfInterest == nullptr && mouseInsideBoard(worldPos.x, worldPos.y))
 				{
-					int numSquares = board->widthSquares * board->heightSquares;
-
-					int i = 0;
-					while (i < numSquares)
-					{
-						if (worldPos.y > board->gameBoardArr[i].square.getPosition().y + board->lenOfSquare)
-						{
-							i += board->widthSquares;
-							continue;
-						}
-						sf::FloatRect gb = board->gameBoardArr[i].square.getGlobalBounds();
-						if (gb.contains(worldPos.x, worldPos.y) && !board->gameBoardArr[i].isClicked)
-						{
-							squareOfInterest = &board->gameBoardArr[i];
-							indexOfInterest = i;
-							//texture.loadFromFile("Textures/texture-2.png");
-							board->gameBoardArr[i].square.setTexture(texturePressed);
-							break;
-						}
-
-						i++;
-					}
+					setSquareOfInterest(squareOfInterest, indexOfInterest, worldPos.x, worldPos.y);
 				}
 
 
@@ -730,6 +694,7 @@ int main()
 				}
 
 			}
+
 
 			if (backFr.contains(worldPos.x, worldPos.y))
 				gameplayBackButtonText->setFillColor(sf::Color::Blue);
@@ -774,9 +739,6 @@ int main()
 
 			}
 
-
-
-			//update timer text
 
 
 			window.draw(*gameplayBackButton);
