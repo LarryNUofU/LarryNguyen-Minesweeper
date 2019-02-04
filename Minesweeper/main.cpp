@@ -12,6 +12,7 @@ bool medMode = false;
 bool setupGameplay = false;
 bool restartGame = false;
 
+//the following are variables for SFML textures, fonts, etc.
 sf::Texture *textureDefault;
 sf::Texture *texturePressed;
 
@@ -39,6 +40,10 @@ bool cleanupMemory = false;
 void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int numSquaresWidth, int numSquaresHeight, int numMines);
 bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int numSquaresHeight);
 bool checkIfMineAround(int boardIndex, int direction, int numSquaresWidth, int numSquaresHeight);
+
+void centerTextInButton(sf::Text &text, sf::Font &font, sf::RectangleShape &button, std::string &str);
+
+//represents a single square of a board
 struct GameSquare
 {
 	sf::Text num;
@@ -50,8 +55,8 @@ struct GameSquare
 	bool isNumber;
 };
 
-void drawAndUpdate(GameSquare &square, int index);
 
+void drawAndUpdate(GameSquare &square, int index);
 
 
 struct Board
@@ -67,12 +72,13 @@ struct Board
 	float lenOfSquare;
 };
 
-void recurseBlankSquares(int index);
 
+void recurseBlankSquares(int index);
 
 Board *board;
 
 void memoryCleanup();
+
 
 //The loop that runs at the main menu
 void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event)
@@ -80,14 +86,8 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event)
 	
 	if (cleanupMemory)
 	{
-		//free up memory
 		memoryCleanup();
 	}
-	
-	
-	
-	
-	
 	
 	//button
 	sf::RectangleShape easyButton(sf::Vector2f(200, 100));
@@ -100,96 +100,35 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event)
 		easyButton.setFillColor(sf::Color::Cyan);
 	}
 
-
-
-
 	//button
 	sf::RectangleShape expertButton(sf::Vector2f(200, 100));
 	expertButton.setFillColor(sf::Color::Blue);
-
 
 	//button
 	sf::RectangleShape mediumButton(sf::Vector2f(200, 100));
 	mediumButton.setFillColor(sf::Color::Blue);
 
+	std::string str;
 
 	//////logic to make text go center of button///////
 	sf::Text text;
-	text.setFont(font);
-
-	text.setString("EASY");
-
-	text.setCharacterSize(48); // in pixels, not points!
-
-	text.setFillColor(sf::Color::Red);
-
-	text.setStyle(sf::Text::Bold);
-
-	sf::FloatRect textBounds(text.getLocalBounds());
-	sf::Vector2f squareSize(easyButton.getSize());
-
-	//line below thanks to Mario from StackOverflow!
-	text.setOrigin((textBounds.width - squareSize.x) / 2 + textBounds.left, (textBounds.height - squareSize.y) / 2 + textBounds.top);
-
-
+	str.assign("EASY");
+	centerTextInButton(text, font, easyButton, str);
 	easyButton.setPosition(sf::Vector2f(200.f, 100.f));
 	text.setPosition(easyButton.getPosition());
 
-
-
-
-	
-
-
-
-	//////logic to make text go center of button///////
 	sf::Text text2;
-	text2.setFont(font);
+	str.assign("MEDIUM");
+	centerTextInButton(text2, font, mediumButton, str);
+	mediumButton.setPosition(sf::Vector2f(200.f, 300.f));
+	text2.setPosition(mediumButton.getPosition());
 
-	text2.setString("EXPERT");
-
-	text2.setCharacterSize(48); // in pixels, not points!
-
-	text2.setFillColor(sf::Color::Red);
-
-	text2.setStyle(sf::Text::Bold);
-
-	sf::FloatRect textBounds2(text2.getLocalBounds());
-	sf::Vector2f squareSize2(easyButton.getSize());
-
-	//line below thanks to Mario from StackOverflow!
-	text2.setOrigin((textBounds2.width - squareSize2.x) / 2 + textBounds2.left, (textBounds2.height - squareSize2.y) / 2 + textBounds2.top);
-
-
+	sf::Text text3;
+	str.assign("EXPERT");
+	centerTextInButton(text3, font, expertButton, str);
 	expertButton.setPosition(sf::Vector2f(200.f, 500.f));
 	expertButton.setOutlineThickness(0.1f);
-	text2.setPosition(expertButton.getPosition());
-
-
-
-	//////logic to make text go center of button///////
-	sf::Text text3;
-	text3.setFont(font);
-
-	text3.setString("MEDIUM");
-
-	text3.setCharacterSize(48); // in pixels, not points!
-
-	text3.setFillColor(sf::Color::Red);
-
-	text3.setStyle(sf::Text::Bold);
-
-	sf::FloatRect textBounds3(text3.getLocalBounds());
-	sf::Vector2f squareSize3(easyButton.getSize());
-
-	//line below thanks to Mario from StackOverflow!
-	text3.setOrigin((textBounds3.width - squareSize3.x) / 2 + textBounds3.left, (textBounds3.height - squareSize3.y) / 2 + textBounds3.top);
-
-
-	mediumButton.setPosition(sf::Vector2f(200.f, 300.f));
-	//mediumButton.setOutlineThickness(1.f);
-	text3.setPosition(mediumButton.getPosition());
-
+	text3.setPosition(expertButton.getPosition());
 
 
 	sf::FloatRect fr = easyButton.getGlobalBounds();
@@ -208,10 +147,8 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event)
 			if (fr.contains(worldPos.x, worldPos.y))
 			{
 				inMainMenu = false;
-				//easyMode = true;
 				setupGameplay = true;
 				easyMode = true;
-				//clock->restart();
 			}
 			else if (fr2.contains(worldPos.x, worldPos.y))
 			{
@@ -242,13 +179,15 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event)
 		mediumButton.setTexture(texturePressed);
 
 
+	//draw the SF objects for the frame to display
 	window.clear();
 	window.draw(easyButton);
 	window.draw(text);
-	window.draw(expertButton);
-	window.draw(text2);
 	window.draw(mediumButton);
+	window.draw(text2);
+	window.draw(expertButton);
 	window.draw(text3);
+
 	window.display();
 
 
@@ -267,8 +206,6 @@ void memoryCleanup() {
 	delete gameplayRestartButton;
 	delete gameplayRestartButtonText;
 	cleanupMemory = false;
-
-
 }
 
 
@@ -742,25 +679,6 @@ int main()
 					validRelease = false;
 				}
 
-
-				//find out if user clicked on a square
-				/*sf::FloatRect fr = board->gameBoardArr[80].square.getGlobalBounds();
-
-	
-				if (backFr.contains(worldPos.x, worldPos.y))
-				{
-
-				}
-				else if (fr.contains(worldPos.x,worldPos.y))
-				{
-					squareOfInterest = &board->gameBoardArr[80].square;
-					texture.loadFromFile("Textures/texture-2.png");
-					board->gameBoardArr[80].square.setTexture(&texture);
-				}
-				else
-				{
-					validRelease = false;
-				}*/
 			}
 
 
@@ -770,8 +688,6 @@ int main()
 			if (rightClickOn && !leftClickOn && validRelease)
 			{
 
-				//sf::Vector2i mouseCoords = sf::Mouse::getPosition(window);
-				//sf::Vector2f worldPos = window.mapPixelToCoords(mouseCoords);
 				if (squareOfInterest == nullptr && worldPos.x >= board->startingPosX && worldPos.x <= board->startingPosX + board->widthSquares * board->lenOfSquare && worldPos.y <= board->startingPosY + board->heightSquares * board->lenOfSquare && worldPos.y >= board->startingPosY)
 				{
 					int numSquares = board->widthSquares * board->heightSquares;
@@ -813,12 +729,7 @@ int main()
 					validRelease = false;
 				}
 
-
-
-
 			}
-
-
 
 			if (backFr.contains(worldPos.x, worldPos.y))
 				gameplayBackButtonText->setFillColor(sf::Color::Blue);
@@ -882,8 +793,6 @@ int main()
 }
 
 
-
-
 void drawAndUpdate(GameSquare &square, int index)
 {
 	if (square.isBlank)
@@ -910,15 +819,28 @@ void drawAndUpdate(GameSquare &square, int index)
 }
 
 
+void centerTextInButton(sf::Text &text, sf::Font &font, sf::RectangleShape &button, std::string &str)
+{
+	//////logic to make text go center of button///////
+	text.setFont(font);
 
+	text.setString(str.c_str());
 
+	text.setCharacterSize(48); // in pixels, not points!
+
+	text.setFillColor(sf::Color::Red);
+
+	text.setStyle(sf::Text::Bold);
+
+	sf::FloatRect textBounds(text.getLocalBounds());
+	sf::Vector2f squareSize(button.getSize());
+
+	//line below thanks to Mario from StackOverflow!
+	text.setOrigin((textBounds.width - squareSize.x) / 2 + textBounds.left, (textBounds.height - squareSize.y) / 2 + textBounds.top);
+}
 
 void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int numSquaresWidth, int numSquaresHeight, int numMines)
 {
-	//create back button and its text
-	gameplayBackButton = new sf::RectangleShape(sf::Vector2f(200, 100));
-
-
 	gameplayFont = new sf::Font;
 	if (!gameplayFont->loadFromFile("Fonts/Roboto-Black.ttf"))
 	{
@@ -926,49 +848,25 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 
 	}
 
+	std::string str;
+
+	//create back button and its text
+	gameplayBackButton = new sf::RectangleShape(sf::Vector2f(200, 100));
 	gameplayBackButtonText = new sf::Text;
-	// select the font
-	gameplayBackButtonText->setFont(*gameplayFont); // font is a sf::Font
-
-	gameplayBackButtonText->setString("BACK");
-
-	gameplayBackButtonText->setCharacterSize(48); // in pixels, not points!
-
-	gameplayBackButtonText->setFillColor(sf::Color::Red);
-
-	//gameplayBackButtonText->setStyle(sf::Text::Bold | sf::Text::Underlined);
-	gameplayBackButtonText->setStyle(sf::Text::Bold | sf::Text::Underlined);
-
-	sf::FloatRect textBounds(gameplayBackButtonText->getLocalBounds());
-	sf::Vector2f squareSize(gameplayBackButton->getSize());
-	gameplayBackButtonText->setOrigin((textBounds.width - squareSize.x) / 2 + textBounds.left, (textBounds.height - squareSize.y) / 2 + textBounds.top);
+	str.assign("BACK");
+	centerTextInButton(*gameplayBackButtonText, *gameplayFont, *gameplayBackButton, str);
 	gameplayBackButtonText->setPosition(gameplayBackButton->getPosition());
 
-
-	//create reset button and its text
+	//creating restart button and its text
 	gameplayRestartButton = new sf::RectangleShape(sf::Vector2f(230, 100));
-
 	gameplayRestartButtonText = new sf::Text;
-	// select the font
-	gameplayRestartButtonText->setFont(*gameplayFont); // font is a sf::Font
-
-	gameplayRestartButtonText->setString("RESTART");
-
-	gameplayRestartButtonText->setCharacterSize(48); // in pixels, not points!
-
-	gameplayRestartButtonText->setFillColor(sf::Color::Red);
-
-	gameplayRestartButtonText->setStyle(sf::Text::Bold | sf::Text::Underlined);
-
-	textBounds = sf::FloatRect(gameplayRestartButtonText->getLocalBounds());
-	squareSize = sf::Vector2f(gameplayRestartButton->getSize());
-	gameplayRestartButtonText->setOrigin((textBounds.width - squareSize.x) / 2 + textBounds.left, (textBounds.height - squareSize.y) / 2 + textBounds.top);
+	str.assign("RESTART");
+	centerTextInButton(*gameplayRestartButtonText, *gameplayFont, *gameplayRestartButton, str);
 	gameplayRestartButtonText->setPosition(gameplayRestartButton->getPosition());
 
-	//set the position
-	//gameplayRestartButton->setPosition(sf::Vector2f(0.f, 110.f));
 	gameplayRestartButton->setPosition(sf::Vector2f(1050.f, 0.f));
 	gameplayRestartButtonText->setPosition(gameplayRestartButton->getPosition());
+
 
 	//creating the board
 	//first, fill board with blank squares
@@ -1051,17 +949,10 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 	}
 
 
-
-
-
-	//calculate the border squares
-	//board->borderSquares = new std::unordered_set<int>;
-	//for (int i = 0; i < )
-
+	//sample the random number generator
 	srand(time(0));
 
 	board->mineSet = new std::unordered_set<int>;
-	//std::unordered_set<int> intSet;
 	//Choose random positions on the board for mines
 	while (numMines > 0)
 	{
@@ -1077,28 +968,9 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 		}
 	}
 	
-	/*//go through the mine squares and calculate the flag squares that surround them. Check to make sure within bounds.
-	for (auto it = intSet.begin(); it != intSet.end(); it++)
-	{
-		int index = *it;
-		for (int i = 0; i <= 7; i++)
-		{
-			if (checkWithinBounds(index, i, numSquaresWidth, numSquaresHeight))
-			{
-				switch (i)
-				{
-				case 0:
-					if (!board->gameBoardArr[index - numSquaresWidth].isMine)
-					board->gameBoardArr[index - numSquaresWidth].
-				}
-			}
-		}
-	}*/
 
-
-
-	//topleft/bottom not detected?????
 	
+	//for each square, calculate a number for the square if it is needed and its color
 	for (int i = 0; i < numSquares; i++)
 	{
 		if (!board->gameBoardArr[i].isMine)
@@ -1124,7 +996,6 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 					board->gameBoardArr[i].num.setFillColor(sf::Color::Blue);
 					break;
 				case 2:
-					//board->gameBoardArr[i].num.setFillColor(sf::Color(20, 201, 44, 255));
 					board->gameBoardArr[i].num.setFillColor(sf::Color(0, 128, 0, 255));
 					break;
 				case 3:
@@ -1146,17 +1017,9 @@ void setupGameplayAndBoard(float boardXpos, float boardYpos, float width, int nu
 					board->gameBoardArr[i].num.setFillColor(sf::Color(128, 128, 128, 255));
 					break;
 				}
-
-
-
 			}
 		}
 	}
-
-
-
-
-
 
 
 }
@@ -1221,18 +1084,12 @@ bool checkIfMineAround(int boardIndex, int direction, int numSquaresWidth, int n
 
 
 //boardIndex assumed to be a valid index
-
 //direction:
 //0 - top left, 1 - top, 2 - top right, 3 - left, 4 - right, 5 - bottom left, 6 - bottom, 7 - bottom right
 //
 //
 bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int numSquaresHeight) 
 {
-	bool top = false;
-	bool left = false;
-	bool right = false;
-	bool bottom = false;
-
 	bool canGoUp = true;
 	bool canGoLeft = true;
 	bool canGoRight = true;
@@ -1247,17 +1104,12 @@ bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int n
 		canGoUp = false;
 		canGoTopLeft = false;
 		canGoTopRight = false;
-
-		//top = true;
 	}
-		
 	if (boardIndex % numSquaresWidth == numSquaresWidth - 1)
 	{
 		canGoTopRight = false;
 		canGoRight = false;
 		canGoBRight = false;
-
-		//right = true;
 	}
 		
 	if (boardIndex >= numSquaresWidth * (numSquaresHeight - 1))
@@ -1265,7 +1117,6 @@ bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int n
 		canGoBLeft = false;
 		canGoDown = false;
 		canGoBRight = false;
-		//bottom = true;
 	}
 
 	if (boardIndex % numSquaresWidth == 0)
@@ -1273,37 +1124,7 @@ bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int n
 		canGoTopLeft = false;
 		canGoLeft = false;
 		canGoBLeft = false;
-		//left = true;
 	}
-
-	/*if (top & right)
-	{
-		canGoUp = false;
-		canGoTopLeft = false;
-		canGoRight = false;
-		canGoBRight = false;
-	}
-	else if (top & left)
-	{
-		canGoUp = false;
-		canGoTopRight = false;
-		canGoLeft = false;
-		canGoBLeft = false;
-	}
-	else if (bottom & right)
-	{
-		canGoDown = false;
-		canGoBLeft = false;
-		canGoTopRight = false;
-		canGoRight = false;
-	}
-	else if (bottom & left)
-	{
-		canGoDown = false;
-		canGoTopLeft = false;
-		canGoLeft = false;
-		canGoBRight = false;
-	}*/
 
 
 	switch (direction)
@@ -1349,36 +1170,6 @@ bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int n
 		else
 			return false;
 	}
-
-	/*if (boardIndex < numSquaresWidth)
-		// check if top left
-		if (boardIndex == 0)
-
-		//check if top right
-		else if (boardIndex == numSquaresWidth - 1)
-
-
-		else
-
-	else if (boardIndex % numSquaresWidth == numSquaresWidth - 1)
-
-		//check if top right
-		if (boardIndex == numSquaresWidth - 1)
-
-
-		//check if bottom right
-        else if (boardIndex == numSquaresWidth * numSquaresHeight - 1)
-
-	    
-		else
-
-    
-	else if (boardIndex >= numSquaresWidth * (numSquaresHeight - 1))
-
-		//check if bottom left
-		if (boardIndex == numSquaresWidth * (numSquaresHeight - 1))
-
-		else if (boardIndex == numSquaresWidth * numSquaresHeight - 1)*/
 
 }
 
@@ -1468,18 +1259,8 @@ void recurseBlankSquares(int index)
 					recurseBlankSquares(index + board->widthSquares + 1);
 			}
 			break;
-
-
-
-
 		}
 
 	}
-
-
-
-
-
-
 
 }
