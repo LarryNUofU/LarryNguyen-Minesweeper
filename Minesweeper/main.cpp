@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <ctime>
 
+#include "GameStats.h"
+
 bool inMainMenu = true;
 bool easyMode = false;
 bool expertMode = false;
@@ -33,6 +35,9 @@ sf::Text timerText;
 
 bool lostGame = false;
 bool wonGame = false;
+bool canUpdateStats = true;
+bool shouldLoadStats = true;
+
 int squaresCountdown = 0;
 
 bool cleanupMemory = false;
@@ -42,6 +47,10 @@ bool checkWithinBounds(int boardIndex, int direction, int numSquaresWidth, int n
 bool checkIfMineAround(int boardIndex, int direction, int numSquaresWidth, int numSquaresHeight);
 
 void centerTextInButton(sf::Text &text, sf::Font &font, sf::RectangleShape &button, std::string &str);
+
+//Represents the stats of games won, etc.
+GameStats stats;
+
 
 //represents a single square of a board
 struct GameSquare
@@ -78,7 +87,8 @@ void recurseBlankSquares(int index);
 Board *board;
 
 void memoryCleanup();
-
+void drawStats(sf::RenderWindow &window, sf::Font &font);
+std::string durationToTime(double time);
 
 //The loop that runs at the main menu
 void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event)
@@ -188,10 +198,50 @@ void mainMenuLoop(sf::RenderWindow &window, sf::Event  &event)
 	window.draw(expertButton);
 	window.draw(text3);
 
+	//Draws the stats on the same screen
+	drawStats(window, font);
+
 	window.display();
 
+	canUpdateStats = true;
 
 
+}
+
+void drawStats(sf::RenderWindow &window, sf::Font &font) {
+	if (stats.saveFileExists() && shouldLoadStats)
+	{
+		stats.loadStats();
+		shouldLoadStats = false;
+	}
+
+	int temp = stats.easyGamesWon;
+	//render stats using SF text
+	sf::Text text;
+	text.setFont(font);
+	text.setFillColor(sf::Color::White);
+	text.setString("Games won: " + std::to_string(stats.easyGamesWon));
+	text.setPosition(sf::Vector2f(410.f, 100.f));
+	window.draw(text);
+	text.setString("Best time: " + (stats.fastestEasyWon != DBL_MAX ? durationToTime(stats.fastestEasyWon) : "N/A"));
+	text.setPosition(sf::Vector2f(410.f, 130.f));
+	window.draw(text);
+	
+
+	text.setString("Games won: " + std::to_string(stats.medGamesWon));
+	text.setPosition(sf::Vector2f(410.f, 300.f));
+	window.draw(text);
+	text.setString("Best time: " + (stats.fastestMedWon != DBL_MAX ? durationToTime(stats.fastestMedWon) : "N/A"));
+	text.setPosition(sf::Vector2f(410.f, 330.f));
+	window.draw(text);
+
+
+	text.setString("Games won: " + std::to_string(stats.expertGamesWon));
+	text.setPosition(sf::Vector2f(410.f, 500.f));
+	window.draw(text);
+	text.setString("Best time: " + (stats.fastestExpertWon != DBL_MAX ? durationToTime(stats.fastestExpertWon) : "N/A"));
+	text.setPosition(sf::Vector2f(410.f, 530.f));
+	window.draw(text);
 }
 
 void memoryCleanup() {
@@ -209,7 +259,7 @@ void memoryCleanup() {
 }
 
 
-void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickOn, bool &rightClickOn, bool &validRelease, bool &clickedOnBackButton, bool &clickedOnRestartButton)
+void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickOn, bool &rightClickOn, bool &validRelease, bool &clickedOnBackButton, bool &clickedOnRestartButton, double &duration)
 {
 
 	sf::Text endText;
@@ -229,6 +279,13 @@ void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickO
 
 	endText.setPosition(sf::Vector2f(300.f, 10.f));
 
+	//update the stats if won
+	if (!lostGame && canUpdateStats)
+	{
+		stats.saveStats((easyMode ? 0 : medMode ? 1 : 2), duration);
+		canUpdateStats = false;
+		shouldLoadStats = true;
+	}
 
 	while (window.pollEvent(event))
 	{
@@ -355,7 +412,6 @@ void lostOrWonLoop(sf::RenderWindow &window, sf::Event  &event, bool &leftClickO
 	window.draw(*gameplayRestartButtonText);
 	window.draw(timerText);
 	window.display();
-
 	
 }
 
@@ -393,6 +449,21 @@ void setSquareOfInterest(GameSquare *&squareOfInterest, int &indexOfInterest, fl
 	}
 }
 
+std::string durationToTime(double duration) {
+	int seconds = (int)duration;
+	int minutes = seconds / 60;
+	seconds = seconds % 60;
+	std::string str;
+	if (minutes < 10)
+		str.append("0");
+	str.append(std::to_string(minutes));
+	str.append(":");
+	if (seconds < 10)
+		str.append("0");
+	str.append(std::to_string(seconds));
+
+	return str;
+}
 
 int main()
 {
@@ -443,7 +514,6 @@ int main()
 	textureWhite = &texture5;
 
 
-
 	bool validRelease = true;
 	bool clickedOnBackButton = false;
 	bool leftClickOn = false;
@@ -456,8 +526,6 @@ int main()
 	std::clock_t start = std::clock();
 	double duration;
 
-
-	
 
 	while (window.isOpen())
 	{
@@ -491,7 +559,7 @@ int main()
 		}
 		else if (lostGame || squaresCountdown == 0)
 		{	
-			lostOrWonLoop(window, event, leftClickOn, rightClickOn, validRelease, clickedOnBackButton, clickedOnRestartButton);
+			lostOrWonLoop(window, event, leftClickOn, rightClickOn, validRelease, clickedOnBackButton, clickedOnRestartButton, duration);
 		}
 		else
 		{
@@ -506,7 +574,7 @@ int main()
 			if (!shouldStartTimer)
 			{
 				duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
-				int seconds = (int)duration;
+				/*int seconds = (int)duration;
 				int minutes = seconds / 60;
 				seconds = seconds % 60;
 				std::string str;
@@ -516,7 +584,8 @@ int main()
 				str.append(":");
 				if (seconds < 10)
 					str.append("0");
-				str.append(std::to_string(seconds));
+				str.append(std::to_string(seconds));*/
+				std::string str = durationToTime(duration);
 
 				timerText.setString(str);
 			}
