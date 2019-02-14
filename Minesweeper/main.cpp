@@ -215,7 +215,7 @@ void drawStats(sf::RenderWindow &window, sf::Font &font) {
 		shouldLoadStats = false;
 	}
 
-	int temp = stats.easyGamesWon;
+	
 	//render stats using SF text
 	sf::Text text;
 	text.setFont(font);
